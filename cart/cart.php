@@ -1,7 +1,7 @@
 <?php
 include_once __DIR__ . '/../helper/db.php';
 include_once __DIR__ . '/../layout/header.php';
-
+include_once __DIR__ . '/../components/session_toast.php';
 if (!isset($_SESSION['user'])) {
   header("Location: /cuahangtaphoa/auth/login.php");
   exit;
@@ -18,15 +18,6 @@ $stmt->bind_param("s", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
-<!-- thông báo lỗi -->
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-  <div id="toastError" class="toast text-bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="d-flex">
-      <div class="toast-body" id="toastErrorMessage">Đây là lỗi</div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-    </div>
-  </div>
-</div>
 
 <h2 class="mb-4">🛒 Giỏ hàng của bạn</h2>
 
@@ -166,39 +157,118 @@ $result = $stmt->get_result();
     fetch('/cuahangtaphoa/api/address_api.php')
       .then(res => res.json())
       .then(data => {
-        addressSelect.innerHTML = "";
+        const addressList = document.getElementById("addressList");
+        addressList.innerHTML = "";
+
         if (data.length === 0) {
-          let opt = new Option("Chưa có địa chỉ", "", false, false);
-          opt.disabled = true;
-          opt.selected = true;
-          addressSelect.append(opt);
-        } else {
-          data.forEach(addr => {
-            const opt = new Option(
-              `${addr.full_name} - ${addr.phone} (${addr.address})`,
-              addr.id,
-              false,
-              addr.id === selected
-            );
-            addressSelect.append(opt);
-          });
+          addressList.innerHTML = '<div class="text-muted">Chưa có địa chỉ nào.</div>';
+          return;
         }
+
+        data.forEach(addr => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "list-group-item d-flex justify-content-between align-items-start";
+
+          wrapper.innerHTML = `
+          <div class="form-check w-100">
+            <input class="form-check-input" type="radio" name="address_option" value="${addr.id}" id="addr-${addr.id}">
+            <label class="form-check-label" for="addr-${addr.id}">
+              <strong>${addr.full_name}</strong> - ${addr.phone}<br>
+              <span class="text-muted">${addr.address}</span>
+            </label>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger ms-2 btn-delete-address" data-id="${addr.id}">Xoá</button>
+        `;
+
+          addressList.appendChild(wrapper);
+        });
+
+        // Gán lại sự kiện cho nút xoá từng địa chỉ
+        document.querySelectorAll(".btn-delete-address").forEach(btn => {
+          btn.addEventListener("click", function() {
+            const id = this.dataset.id;
+
+            const form = document.getElementById("confirmForm");
+            form.action = "/cuahangtaphoa/api/delete_address.php";
+            document.getElementById("confirmDeleteId").value = id;
+            document.querySelector("#confirmModal .modal-body").textContent =
+              "Bạn có chắc chắn muốn xoá địa chỉ này không?";
+
+            // Đánh dấu là xoá địa chỉ
+            form.dataset.type = "address";
+
+            const modal = new bootstrap.Modal(document.getElementById("confirmModal"));
+            modal.show();
+          });
+        });
+
+
+
+        // Gán sự kiện khi chọn radio
+        document.querySelectorAll('input[name="address_option"]').forEach(radio => {
+          radio.addEventListener("change", function() {
+            document.getElementById("selectedAddressId").value = this.value;
+          });
+        });
       });
   }
+
 
   // Mở modal thanh toán
   document.getElementById('btnCheckout').addEventListener('click', () => {
     const checked = [...document.querySelectorAll(".item-check:checked")].map(cb => cb.value);
     if (checked.length === 0) {
-      document.getElementById("toastErrorMessage").textContent = "Vui lòng chọn sản phẩm trong giỏ hàng!";
-      new bootstrap.Toast(document.getElementById("toastError")).show();
+      fetch('/cuahangtaphoa/components/generate_toast.php?type=error&msg=' + encodeURIComponent("Vui lòng chọn sản phẩm trong giỏ hàng!"))
+        .then(res => res.text())
+        .then(html => {
+          document.body.insertAdjacentHTML('beforeend', html);
+          const toastEl = document.querySelector('.toast');
+          if (toastEl) new bootstrap.Toast(toastEl).show();
+        });
       return;
     }
-
-
     document.getElementById("selectedCartItems").value = checked.join(',');
     loadAddresses();
     new bootstrap.Modal(document.getElementById("checkoutModal")).show();
+  });
+  //reload modal sau khi xác nhận xóa địa chỉ
+  document.getElementById("confirmForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const type = form.dataset.type; // address hoặc cart
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.text()) // nếu PHP trả về redirect thì vẫn chạy
+      .then(() => {
+        // Đóng modal
+        bootstrap.Modal.getInstance(document.getElementById("confirmModal")).hide();
+
+        if (type === "address") {
+          const checkoutModal = new bootstrap.Modal(document.getElementById("checkoutModal"));
+          checkoutModal.show();
+          loadAddresses();
+
+          // Gọi lại session toast nếu có
+          fetch('/cuahangtaphoa/components/session_toast.php')
+            .then(res => res.text())
+            .then(html => {
+              document.body.insertAdjacentHTML('beforeend', html);
+              const toastEl = document.querySelector('.toast');
+              if (toastEl) new bootstrap.Toast(toastEl).show();
+            });
+        } else {
+          // Trường hợp xoá cart item → reload giỏ hoặc cập nhật lại DOM
+          location.reload(); // hoặc updateTotal() và xoá row
+        }
+
+
+      });
+
   });
 
   // Gửi form thêm địa chỉ
@@ -213,37 +283,45 @@ $result = $stmt->get_result();
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          alert("Đã thêm địa chỉ!");
           this.reset();
           bootstrap.Modal.getInstance(document.getElementById("addAddressModal")).hide();
-          loadAddresses(data.new_id); // Giữ modal checkout, reload địa chỉ
+
+          const checkoutModal = new bootstrap.Modal(document.getElementById("checkoutModal"));
+          checkoutModal.show();
+
+          loadAddresses(data.new_id);
+
+          // Hiện toast từ session (reload session toast nếu có)
+          fetch('/cuahangtaphoa/components/session_toast.php')
+            .then(res => res.text())
+            .then(html => {
+              document.body.insertAdjacentHTML('beforeend', html);
+              const toast = new bootstrap.Toast(document.getElementById("toastSuccess"));
+              toast.show();
+            });
         } else {
-          alert("Thêm thất bại: " + data.error);
+          // Gán lỗi lên toastError
+          document.getElementById("toastErrorMessage").textContent = data.error;
+          new bootstrap.Toast(document.getElementById("toastError")).show();
         }
       });
   });
 
-  // Xoá địa chỉ
+
+
+  // Xoá địa chỉ (nút ở dưới select)
   btnDeleteAddress.addEventListener("click", () => {
     const id = addressSelect.value;
-    if (!id || !confirm("Bạn chắc chắn muốn xoá địa chỉ này?")) return;
+    if (!id) return;
 
-    fetch('/cuahangtaphoa/api/delete_address.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `id=${id}`
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert("Đã xoá địa chỉ!");
-          loadAddresses();
-        } else {
-          alert("Không thể xoá địa chỉ.");
-        }
-      });
+    const form = document.getElementById("confirmForm");
+    form.action = "/cuahangtaphoa/api/delete_address.php";
+    document.getElementById("confirmDeleteId").value = id;
+    document.querySelector("#confirmModal .modal-body").textContent =
+      "Bạn có chắc chắn muốn xoá địa chỉ này không?";
+    form.dataset.type = "address";
+
+    new bootstrap.Modal(document.getElementById("confirmModal")).show();
   });
 </script>
 <!-- script cho button remove sản phẩm khỏi cart -->
@@ -253,13 +331,11 @@ $result = $stmt->get_result();
       const cartId = this.dataset.id;
       const form = document.getElementById("confirmForm");
 
-      // Action luôn là remove_from_cart.php
       form.action = "remove_from_cart.php";
-
-      // Gán cart ID vào hidden input
       document.getElementById("confirmDeleteId").value = cartId;
+      document.querySelector("#confirmModal .modal-body").textContent =
+        "Bạn có chắc chắn muốn xoá sản phẩm này khỏi giỏ hàng không?";
 
-      // Hiện modal
       const modal = new bootstrap.Modal(document.getElementById("confirmModal"));
       modal.show();
     });

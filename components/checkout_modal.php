@@ -11,9 +11,9 @@
 
           <div class="mb-3">
             <label class="form-label">Chọn địa chỉ giao hàng</label>
-            <select name="address_id" class="form-select" id="addressSelect">
-              <!-- Địa chỉ sẽ được JS fetch từ address_api.php -->
-            </select>
+            <div id="addressList" class="list-group"></div>
+            <input type="hidden" name="address_id" id="selectedAddressId">
+
             <div class="form-text">
               Chưa có địa chỉ? <a href="#" data-bs-toggle="modal" data-bs-target="#addAddressModal">Thêm địa chỉ mới</a>
             </div>

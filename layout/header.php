@@ -1,5 +1,5 @@
 <?php
-include_once __DIR__ . "/../helper/db.php"; // kết nối DB nếu cần
+include_once __DIR__ . "/../helper/db.php"; // Kết nối DB nếu cần
 if (session_status() == PHP_SESSION_NONE) session_start();
 
 // Kiểm tra session user
@@ -19,31 +19,7 @@ $role = $user['role'] ?? null;
 </head>
 
 <body>
-  <?php
-  $toastTypes = ['success', 'error', 'info', 'warning'];
-  foreach ($toastTypes as $type):
-    if (isset($_SESSION[$type])):
-      // Map kiểu sang Bootstrap class
-      $class = match ($type) {
-        'success' => 'bg-success text-white',
-        'error'   => 'bg-danger text-white',
-        'info'    => 'bg-info text-dark',
-        'warning' => 'bg-warning text-dark',
-      };
-  ?>
-      <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-        <div class="toast align-items-center <?= $class ?> border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
-          <div class="d-flex">
-            <div class="toast-body">
-              <?= $_SESSION[$type];
-              unset($_SESSION[$type]); ?>
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-          </div>
-        </div>
-      </div>
-  <?php endif;
-  endforeach; ?>
+  <?php include_once __DIR__ . '/../components/session_toast.php'; ?>
 
 
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -56,7 +32,6 @@ $role = $user['role'] ?? null;
               <li class="nav-item"><a class="nav-link" href="admin_orders.php">📦 Quản lý đơn hàng</a></li>
             <?php else: ?>
               <?php include_once __DIR__ . '/components/cart_header.php'; ?>
-
               <li class="nav-item"><a class="nav-link" href="my_orders.php">📜 Đơn hàng của tôi</a></li>
             <?php endif; ?>
             <li class="nav-item"><a class="nav-link" href="/cuahangtaphoa/auth/logout.php">🚪 Đăng xuất</a></li>
