@@ -60,15 +60,20 @@ $result = $stmt->get_result();
 
 
               <?php if ($row['order_status'] === 'chưa thanh toán'): ?>
-                <a href="/cuahangtaphoa/momo_payment.php?order_id=<?= $row['id'] ?>" class="btn btn-sm btn-warning mb-1">Thanh toán ngay</a>
-              <?php elseif (in_array($row['order_status'], ['chuẩn bị lấy hàng', 'đang giao'])): ?>
-                <form method="POST" action="/cuahangtaphoa/orders/cancel_request.php" class="d-inline">
+                <form method="POST" action="/cuahangtaphoa/momo_payment.php" class="d-inline">
                   <input type="hidden" name="order_id" value="<?= $row['id'] ?>">
-                  <?php if ($row['payment_method'] === 'bank_transfer'): ?>
-                    <input type="text" name="bank_info" placeholder="STK ngân hàng" required class="form-control form-control-sm mb-1">
-                  <?php endif; ?>
-                  <button type="submit" class="btn btn-sm btn-danger mb-1">Yêu cầu huỷ</button>
+                  <button type="submit" class="btn btn-sm btn-warning mb-1">Thanh toán ngay</button>
                 </form>
+
+              <?php elseif (in_array($row['order_status'], ['chuẩn bị lấy hàng', 'đang giao'])): ?>
+                <?php if ($row['payment_method'] === 'bank_transfer'): ?>
+                  <button type="button"
+                    class="btn btn-sm btn-danger mb-1 btn-cancel-order"
+                    data-order-id="<?= $row['id'] ?>">
+                    Yêu cầu huỷ
+                  </button>
+                <?php endif; ?>
+
               <?php elseif ($row['order_status'] === 'yêu cầu huỷ'): ?>
                 <span class="text-muted">Đã yêu cầu huỷ</span>
               <?php endif; ?>
@@ -83,8 +88,42 @@ $result = $stmt->get_result();
   <?php include __DIR__ . '/../components/order_detail_modal.php'; ?>
 </div>
 
+
+<!-- modal điền bank-->
+
+<!-- Modal nhập thông tin hoàn tiền -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="cancelForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Yêu cầu huỷ & hoàn tiền</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="order_id" id="cancel_order_id">
+          <div class="mb-3">
+            <label for="full_name">Họ tên người nhận</label>
+            <input type="text" name="full_name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="bank_number">Số tài khoản MOMO</label>
+            <input type="text" name="bank_number" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Xác nhận huỷ</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- modal điền bank-->
+
 <?php include_once __DIR__ . '/../layout/footer.php'; ?>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- script chi tiet order -->
 <script>
   $('.view-details').on('click', function() {
     const orderId = $(this).data('id');
@@ -139,6 +178,36 @@ $result = $stmt->get_result();
       },
       error: function() {
         $('#order-detail-content').html('<p class="text-danger">Không thể tải chi tiết đơn hàng.</p>');
+      }
+    });
+  });
+</script>
+<!-- script bank -->
+<script>
+  // Mở modal và gán order_id
+  $('.btn-cancel-order').on('click', function() {
+    const orderId = $(this).data('order-id');
+    $('#cancel_order_id').val(orderId);
+    $('#cancelModal').modal('show');
+  });
+
+  // Gửi AJAX khi submit form modal
+  $('#cancelForm').on('submit', function(e) {
+    e.preventDefault();
+
+    $.ajax({
+      url: '/cuahangtaphoa/orders/cancel_request.php',
+      method: 'POST',
+      data: $(this).serialize(),
+      success: function(res) {
+        if (res.status === 'success') {
+          window.location.reload(); // Toast sẽ hiển thị nhờ session
+        } else {
+          alert(res.message);
+        }
+      },
+      error: function() {
+        alert("Có lỗi xảy ra, vui lòng thử lại!");
       }
     });
   });

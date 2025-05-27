@@ -105,7 +105,7 @@ $conn->query("DELETE FROM cart_items WHERE id IN ('$id_list') AND user_id = '$us
 // Điều hướng sau khi đặt hàng
 if ($payment_method === 'bank_transfer') {
     $_SESSION['success'] = "Đơn hàng đã được tạo. Vui lòng thanh toán qua MoMo.";
-    header("Location: /cuahangtaphoa/momo_payment.php?order_id=$order_id");
+    header("Location: /cuahangtaphoa/orders/my_orders.php");
 } else {
     $_SESSION['success'] = "Đặt hàng thành công. Đơn hàng đang được chuẩn bị.";
     header("Location: /cuahangtaphoa/orders/my_orders.php");

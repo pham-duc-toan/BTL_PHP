@@ -29,7 +29,7 @@ $role = $user['role'] ?? null;
         <ul class="navbar-nav ms-auto">
           <?php if ($user): ?>
             <?php if ($role === 'admin'): ?>
-              <li class="nav-item"><a class="nav-link" href="admin_orders.php">📦 Quản lý đơn hàng</a></li>
+              <li class="nav-item"><a class="nav-link" href="/cuahangtaphoa/admin/orders.php">📦 Quản lý đơn hàng</a></li>
             <?php else: ?>
               <?php include_once __DIR__ . '/components/cart_header.php'; ?>
               <li class="nav-item"><a class="nav-link" href="/cuahangtaphoa/orders/my_orders.php">📜 Đơn hàng của tôi</a></li>

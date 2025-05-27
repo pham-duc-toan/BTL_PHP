@@ -10,46 +10,63 @@ if (!isset($_SESSION['user'])) {
   exit;
 }
 
-$order_id = $_GET['order_id'] ?? '';
+$order_id = $_POST['order_id'] ?? '';
+
 $user_id = $_SESSION['user']['id'];
 
-// Kiểm tra đơn hàng thuộc user và chưa thanh toán
-$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ? AND order_status = 'chưa thanh toán'");
+// Kiểm tra đơn hàng tồn tại, thuộc user, chưa thanh toán
+$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ? AND payment_method = 'bank_transfer' AND order_status = 'chưa thanh toán'");
 $stmt->bind_param("ss", $order_id, $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-  $_SESSION['error'] = "Không tìm thấy đơn hợp lệ.";
+  $_SESSION['error'] = "Không tìm thấy đơn hàng hợp lệ.";
   header("Location: /cuahangtaphoa/orders/my_orders.php");
   exit;
 }
 
 $order = $result->fetch_assoc();
-$total = (int)$order['total_amount'];
+$amount = (string)(int)$order['total_amount'];
+$extraData = ""; // bắt buộc phải có
 
-// Thông tin tích hợp MoMo (sandbox)
+// MoMo (sandbox) config
 $endpoint = "https://test-payment.momo.vn/v2/gateway/api/create";
+$accessKey  = "klm05TvNBzhg7h7j";
+$secretKey  = "at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa";
 $partnerCode = "MOMOBKUN20180529";
-$accessKey = "klm05TvNBzhg7h7j";
-$secretKey = "qH6sJbtvN8jK2t3xM3s3K1d9S3m1FQ9h";
+
+// Tạo orderId duy nhất cho MoMo
+$timestamp = time();
+$mo_order_id = $order_id . "_" . $timestamp;
+$requestId = $mo_order_id;
 $orderInfo = "Thanh toán đơn hàng $order_id";
-$redirectUrl = "https://2261-42-116-243-148.ngrok-free.app/BTL_PHP/momo_return.php";
-$ipnUrl = "https://2261-42-116-243-148.ngrok-free.app/BTL_PHP/momo_return.php";
-$requestId = time() . "";
+
+$redirectUrl = "https://47ce-42-116-243-148.ngrok-free.app/cuahangtaphoa/momo_return.php";
+$ipnUrl = "https://47ce-42-116-243-148.ngrok-free.app/cuahangtaphoa/momo_return.php";
 $requestType = "captureWallet";
-$extraData = "";
 
 // Tạo chữ ký
-$rawHash = "accessKey=$accessKey&amount=$total&extraData=$extraData&ipnUrl=$ipnUrl&orderId=$order_id&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType";
+$rawHash = "accessKey=$accessKey"
+  . "&amount=$amount"
+  . "&extraData=$extraData"
+  . "&ipnUrl=$ipnUrl"
+  . "&orderId=$mo_order_id"
+  . "&orderInfo=$orderInfo"
+  . "&partnerCode=$partnerCode"
+  . "&redirectUrl=$redirectUrl"
+  . "&requestId=$requestId"
+  . "&requestType=$requestType";
+
 $signature = hash_hmac("sha256", $rawHash, $secretKey);
 
+// Gửi yêu cầu tới MoMo
 $data = [
   'partnerCode' => $partnerCode,
   'accessKey' => $accessKey,
   'requestId' => $requestId,
-  'amount' => "$total",
-  'orderId' => $order_id,
+  'amount' => $amount,
+  'orderId' => $mo_order_id,
   'orderInfo' => $orderInfo,
   'redirectUrl' => $redirectUrl,
   'ipnUrl' => $ipnUrl,
@@ -65,14 +82,16 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 
-$result = curl_exec($ch);
+$response = curl_exec($ch);
 curl_close($ch);
 
-$response = json_decode($result, true);
-if (isset($response['payUrl'])) {
-  header('Location: ' . $response['payUrl']);
+$res = json_decode($response, true);
+if (isset($res['payUrl'])) {
+  header('Location: ' . $res['payUrl']);
   exit;
 } else {
-  echo "Lỗi khi tạo yêu cầu thanh toán.";
-  var_dump($response);
+  echo "Lỗi khi tạo yêu cầu thanh toán.<br>";
+  echo "<pre>";
+  var_dump($res);
+  echo "</pre>";
 }
