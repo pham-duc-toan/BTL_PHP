@@ -127,7 +127,7 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
 </div>
 <?php include_once __DIR__ . '/../layout/footer.php'; ?>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <!-- script cot hanh dong  -->
 <script>
   $(document).ready(function() {

@@ -122,7 +122,7 @@ $result = $stmt->get_result();
 <!-- modal điền bank-->
 
 <?php include_once __DIR__ . '/../layout/footer.php'; ?>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <!-- script chi tiet order -->
 <script>
   $('.view-details').on('click', function() {

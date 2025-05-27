@@ -88,13 +88,23 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
                 </div>
 
 
-                <a href="checkout.php?product_id=<?= $row['id'] ?>&buy_now=1" class="btn btn-success">💰 Mua ngay</a>
+                <button class="btn btn-success btn-buy-now"
+                  data-product-id="<?= $row['id'] ?>"
+                  data-product-name="<?= htmlspecialchars($row['name']) ?>"
+                  data-price="<?= $final_price ?>">
+                  💰 Mua ngay
+                </button>
+
+
+
               </div>
+              <?php include __DIR__ . '\components\quick_checkout_modal.php'; ?>
             <?php endif; ?>
           </div>
         </div>
       </div>
     <?php endwhile; ?>
+
   </div>
 
   <!-- PHÂN TRANG -->
@@ -115,3 +125,76 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
 <?php endif; ?>
 
 <?php include "layout/footer.php"; ?>
+<!-- script modal quick checkout  -->
+<script>
+  $(document).ready(function() {
+    // Khi bấm nút Mua ngay
+    $('.btn-buy-now').on('click', function() {
+      const id = $(this).data('product-id');
+      const name = $(this).data('product-name');
+      const price = $(this).data('price');
+
+      $('#quickProductId').val(id);
+      $('#quickProductName').val(name);
+      $('#quickProductPrice').val(price);
+
+      loadQuickAddresses(); // gọi danh sách địa chỉ riêng cho modal Mua ngay
+
+      const modal = new bootstrap.Modal(document.getElementById("quickCheckoutModal"));
+      modal.show();
+    });
+
+    // Gửi form mua ngay
+    $('#quickCheckoutForm').on('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      fetch('/cuahangtaphoa/api/quick_checkout.php', {
+          method: 'POST',
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            window.location.href = '/cuahangtaphoa/user_orders.php';
+          } else {
+            alert(data.error || "Đã xảy ra lỗi, vui lòng thử lại.");
+          }
+        })
+        .catch(() => alert("Không thể kết nối máy chủ."));
+    });
+  });
+
+  // Hàm load địa chỉ giao hàng cho modal Mua ngay
+  function loadQuickAddresses() {
+    const addressList = document.getElementById("quickAddressList");
+    addressList.innerHTML = `<div class="text-muted">Đang tải...</div>`;
+    fetch('/cuahangtaphoa/api/address_api.php')
+      .then(res => res.json())
+      .then(data => {
+        addressList.innerHTML = "";
+
+        if (data.length === 0) {
+          addressList.innerHTML = '<div class="text-danger">Chưa có địa chỉ nào. Hãy thêm mới trước khi mua.</div>';
+          return;
+        }
+
+        data.forEach(addr => {
+          const wrapper = document.createElement("label");
+          wrapper.className = "list-group-item";
+          wrapper.innerHTML = `
+            <input type="radio" name="address_option" value="${addr.id}" class="form-check-input me-1" required>
+            ${addr.full_name} - ${addr.phone} - ${addr.address}
+          `;
+          addressList.appendChild(wrapper);
+        });
+
+        // Gán sự kiện chọn địa chỉ
+        document.querySelectorAll('input[name="address_option"]').forEach(radio => {
+          radio.addEventListener("change", function() {
+            document.getElementById("quickSelectedAddressId").value = this.value;
+          });
+        });
+      });
+  }
+</script>
