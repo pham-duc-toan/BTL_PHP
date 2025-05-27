@@ -81,7 +81,13 @@ $result = $stmt->get_result();
                     Yêu cầu huỷ
                   </button>
                 <?php endif; ?>
-
+                <?php if ($row['order_status'] === 'chuẩn bị lấy hàng'): ?>
+                  <button type="button"
+                    class="btn btn-sm btn-secondary mb-1 btn-edit-address"
+                    data-order-id="<?= $row['id'] ?>">
+                    Thay đổi địa chỉ
+                  </button>
+                <?php endif; ?>
               <?php elseif ($row['order_status'] === 'yêu cầu huỷ'): ?>
                 <span class="text-muted">Đã yêu cầu huỷ</span>
               <?php endif; ?>
