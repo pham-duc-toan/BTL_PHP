@@ -24,9 +24,11 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
         <th>Ngày đặt</th>
         <th>Thanh toán</th>
         <th>Trạng thái</th>
+        <th>Chi tiết</th> <!-- mới -->
         <th>Hành động</th>
       </tr>
     </thead>
+
     <tbody>
       <?php while ($row = $result->fetch_assoc()): ?>
         <tr>
@@ -36,6 +38,12 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
           <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
           <td><?= $row['payment_method'] === 'cod' ? 'COD' : 'Chuyển khoản' ?></td>
           <td><?= $row['order_status'] ?></td>
+          <td>
+            <button class="btn btn-sm btn-info view-details" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#orderDetailModal">
+              Xem
+            </button>
+          </td>
+
           <td>
             <?php
             $status = $row['order_status'];
@@ -100,11 +108,27 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
   </div>
 
   <!-- end modal bank info -->
+  <!-- Modal chi tiết đơn hàng -->
+  <div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Chi tiết đơn hàng</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="order-detail-content">
+          <p class="text-muted">Đang tải...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- end Modal chi tiết đơn hàng -->
+
 </div>
 <?php include_once __DIR__ . '/../layout/footer.php'; ?>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+<!-- script cot hanh dong  -->
 <script>
   $(document).ready(function() {
     // Gọi modal hoàn tiền
@@ -171,5 +195,61 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
       }, 'json');
     });
 
+  });
+</script>
+<!-- script  cot chi tiet don hang  -->
+<script>
+  // Chi tiết đơn hàng
+  $('.view-details').on('click', function() {
+    const orderId = $(this).data('id');
+    $('#order-detail-content').html('<p class="text-muted">Đang tải...</p>');
+
+    $.ajax({
+      url: '/cuahangtaphoa/api/order_items_api.php',
+      method: 'GET',
+      data: {
+        order_id: orderId
+      },
+      dataType: 'json',
+      success: function(response) {
+        if (response.length === 0) {
+          $('#order-detail-content').html('<p class="text-muted">Không có sản phẩm nào.</p>');
+          return;
+        }
+
+        let html = `
+        <table class="table table-bordered table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Ảnh</th>
+              <th>Tên sản phẩm</th>
+              <th>Size</th>
+              <th>Số lượng</th>
+              <th>Đơn giá</th>
+              <th>Thành tiền</th>
+            </tr>
+          </thead><tbody>`;
+
+        response.forEach(item => {
+          html += `
+          <tr>
+            <td class="text-center">
+              <img src="${item.image}" width="60" class="img-thumbnail">
+            </td>
+            <td>${item.name}</td>
+            <td>${item.size}</td>
+            <td>${item.quantity}</td>
+            <td>${Number(item.price).toLocaleString()} đ</td>
+            <td>${(item.price * item.quantity).toLocaleString()} đ</td>
+          </tr>`;
+        });
+
+        html += '</tbody></table>';
+        $('#order-detail-content').html(html);
+      },
+      error: function() {
+        $('#order-detail-content').html('<p class="text-danger">Không thể tải chi tiết đơn hàng.</p>');
+      }
+    });
   });
 </script>
