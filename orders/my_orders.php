@@ -68,7 +68,11 @@ $result = $stmt->get_result();
                   <input type="hidden" name="order_id" value="<?= $row['id'] ?>">
                   <button type="submit" class="btn btn-sm btn-warning mb-1">Thanh toán ngay</button>
                 </form>
-
+                <button type="button"
+                  class="btn btn-sm btn-secondary mb-1 btn-edit-address"
+                  data-order-id="<?= $row['id'] ?>">
+                  Thay đổi địa chỉ
+                </button>
               <?php elseif (in_array($row['order_status'], ['chuẩn bị lấy hàng', 'đang giao'])): ?>
                 <?php if ($row['payment_method'] === 'bank_transfer'): ?>
                   <button type="button"
@@ -94,8 +98,6 @@ $result = $stmt->get_result();
 
 
 <!-- modal điền bank-->
-
-<!-- Modal nhập thông tin hoàn tiền -->
 <div class="modal fade" id="cancelModal" tabindex="-1">
   <div class="modal-dialog">
     <form id="cancelForm">
@@ -122,9 +124,32 @@ $result = $stmt->get_result();
     </form>
   </div>
 </div>
-
-<!-- modal điền bank-->
-
+<!-- end modal điền bank-->
+<!-- Modal thay đổi địa chỉ -->
+<div class="modal fade" id="changeAddressModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form id="changeAddressForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">🔄 Thay đổi địa chỉ giao hàng</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="order_id" id="change_order_id">
+        <div id="addressRadioList" class="list-group mb-3">
+          <div class="text-muted">Đang tải danh sách địa chỉ...</div>
+        </div>
+        <div class="form-text">
+          <a href="#" data-bs-toggle="modal" data-bs-target="#addAddressModal" onclick="setChangeAddressMode()">➕ Thêm địa chỉ mới</a>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Cập nhật</button>
+      </div>
+    </form>
+  </div>
+</div>
+<?php include_once __DIR__ . '/../components/add_address_modal.php'; ?>
+<?php include_once __DIR__ . '/../components/confirm_modal.php'; ?>
 <?php include_once __DIR__ . '/../layout/footer.php'; ?>
 
 <!-- script chi tiet order -->
@@ -214,5 +239,148 @@ $result = $stmt->get_result();
         alert("Có lỗi xảy ra, vui lòng thử lại!");
       }
     });
+  });
+</script>
+<!-- script change address  -->
+<script>
+  let currentAddressOrderId = null;
+
+  function setChangeAddressMode() {
+    currentAddressContext = 'change';
+  }
+
+  function loadAddressRadioList(selected = null) {
+    const wrapper = document.getElementById("addressRadioList");
+    wrapper.innerHTML = `<div class="text-muted">Đang tải...</div>`;
+
+    fetch('/cuahangtaphoa/api/address_api.php')
+      .then(res => res.json())
+      .then(data => {
+        wrapper.innerHTML = "";
+        if (data.length === 0) {
+          wrapper.innerHTML = `<div class="text-danger">Chưa có địa chỉ nào.</div>`;
+          return;
+        }
+
+        data.forEach(addr => {
+          const label = document.createElement("label");
+          label.className = "list-group-item d-flex justify-content-between align-items-center";
+          label.innerHTML = `
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="new_address_id" value="${addr.id}" ${selected == addr.id ? 'checked' : ''}>
+              <label class="form-check-label">
+                <strong>${addr.full_name}</strong> - ${addr.phone}<br>
+                <span class="text-muted">${addr.address}</span>
+              </label>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-address" data-id="${addr.id}">xóa</button>
+          `;
+          wrapper.appendChild(label);
+
+          label.querySelector('.btn-delete-address').addEventListener("click", function() {
+            const form = document.getElementById("confirmForm");
+            form.action = "/cuahangtaphoa/api/delete_address.php";
+            document.getElementById("confirmDeleteId").value = addr.id;
+            document.querySelector("#confirmModal .modal-body").textContent = "Bạn có chắc chắn muốn xoá địa chỉ này?";
+            form.dataset.type = "change";
+
+            const modal = new bootstrap.Modal(document.getElementById("confirmModal"));
+            modal.show();
+          });
+        });
+      });
+  }
+  // Xử lý thêm địa chỉ từ modal
+  document.getElementById("addAddressForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('/cuahangtaphoa/api/add_address.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          this.reset();
+          const addModalEl = document.getElementById("addAddressModal");
+          const addModal = bootstrap.Modal.getInstance(addModalEl);
+          addModal.hide();
+
+          // Chờ modal đóng xong rồi mới mở lại modal chọn địa chỉ
+          addModalEl.addEventListener('hidden.bs.modal', function handleHidden() {
+            addModalEl.removeEventListener('hidden.bs.modal', handleHidden);
+
+            // Chỉ cần mở lại changeAddressModal và load địa chỉ
+            const modal = new bootstrap.Modal(document.getElementById("changeAddressModal"));
+            modal.show();
+            loadAddressRadioList(data.new_id);
+          });
+
+          // Hiện toast nếu có
+          fetch('/cuahangtaphoa/components/session_toast.php')
+            .then(res => res.text())
+            .then(html => {
+              document.body.insertAdjacentHTML('beforeend', html);
+              const toast = new bootstrap.Toast(document.getElementById("toastSuccess"));
+              toast.show();
+            });
+
+        } else {
+          document.getElementById("toastErrorMessage").textContent = data.error;
+          new bootstrap.Toast(document.getElementById("toastError")).show();
+        }
+      });
+  });
+
+
+  // Khi bấm "Thay đổi địa chỉ"
+  document.querySelectorAll(".btn-edit-address").forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentAddressOrderId = btn.dataset.orderId;
+      document.getElementById("change_order_id").value = currentAddressOrderId;
+      loadAddressRadioList();
+      new bootstrap.Modal(document.getElementById("changeAddressModal")).show();
+    });
+  });
+
+  // Gửi form thay đổi địa chỉ
+  document.getElementById("changeAddressForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch("/cuahangtaphoa/api/update_order_address.php", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert(data.message || "Không thể cập nhật.");
+        }
+      });
+  });
+
+  // Sau khi xoá địa chỉ xong từ confirmModal
+  document.getElementById("confirmForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch(this.action, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById("confirmModal")).hide();
+
+        if (this.dataset.type === 'change') {
+          loadAddressRadioList();
+          const modal = new bootstrap.Modal(document.getElementById("changeAddressModal"));
+          modal.show();
+        }
+      });
   });
 </script>
