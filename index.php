@@ -62,7 +62,7 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
                     <form action="/cuahangtaphoa/api/add_to_cart.php" method="post" class="modal-content">
                       <div class="modal-header">
                         <h5 class="modal-title">Chọn size và số lượng</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
                       </div>
                       <div class="modal-body">
                         <input type="hidden" name="product_id" value="<?= $row['id'] ?>">

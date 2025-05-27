@@ -101,7 +101,7 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.full_name, a.phone, a
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Thông tin hoàn tiền</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
         </div>
         <div class="modal-body">
           <p><strong>Họ tên người nhận:</strong> <span id="refund_full_name"></span></p>
@@ -124,7 +124,7 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.full_name, a.phone, a
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Chi tiết đơn hàng</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
         </div>
         <div class="modal-body" id="order-detail-content">
           <p class="text-muted">Đang tải...</p>

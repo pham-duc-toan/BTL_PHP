@@ -110,7 +110,7 @@ $result = $stmt->get_result();
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Yêu cầu huỷ & hoàn tiền</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
         </div>
         <div class="modal-body">
           <input type="hidden" name="order_id" id="cancel_order_id">
@@ -137,7 +137,7 @@ $result = $stmt->get_result();
     <form id="changeAddressForm" class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">🔄 Thay đổi địa chỉ giao hàng</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
       </div>
       <div class="modal-body">
         <input type="hidden" name="order_id" id="change_order_id">

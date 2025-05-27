@@ -4,7 +4,7 @@
     <form class="modal-content" id="quickCheckoutForm">
       <div class="modal-header">
         <h5 class="modal-title">💰 Mua ngay</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
       </div>
       <div class="modal-body">
         <input type="hidden" name="product_id" id="quickProductId">

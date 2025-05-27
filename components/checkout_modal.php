@@ -5,7 +5,7 @@
       <form action="/cuahangtaphoa/api/process_checkout.php" method="post" id="checkoutForm">
         <div class="modal-header">
           <h5 class="modal-title">🧾 Thanh toán</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
         </div>
         <div class="modal-body">
 
