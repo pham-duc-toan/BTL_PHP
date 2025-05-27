@@ -192,7 +192,7 @@ $result = $stmt->get_result();
             form.action = "/cuahangtaphoa/api/delete_address.php";
             document.getElementById("confirmDeleteId").value = id;
             document.querySelector("#confirmModal .modal-body").textContent =
-              "Bạn có chắc chắn muốn xoá địa chỉ này không?";
+              "Bạn có chắc chắn muốn gỡ địa chỉ này khỏi tài khoản?";
 
             // Đánh dấu là xoá địa chỉ
             form.dataset.type = "address";
@@ -318,7 +318,7 @@ $result = $stmt->get_result();
     form.action = "/cuahangtaphoa/api/delete_address.php";
     document.getElementById("confirmDeleteId").value = id;
     document.querySelector("#confirmModal .modal-body").textContent =
-      "Bạn có chắc chắn muốn xoá địa chỉ này không?";
+      "Bạn có chắc chắn muốn gỡ địa chỉ này khỏi tài khoản?";
     form.dataset.type = "address";
 
     new bootstrap.Modal(document.getElementById("confirmModal")).show();

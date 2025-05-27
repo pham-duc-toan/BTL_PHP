@@ -33,6 +33,10 @@
         <div class="mb-3">
           <label class="form-label">Địa chỉ giao hàng</label>
           <div id="quickAddressList" class="list-group"></div>
+          <div class="form-text mt-1">
+            <a href="#" data-bs-toggle="modal" data-bs-target="#addAddressModal" onclick="setAddAddressMode('quick')">➕ Thêm địa chỉ mới</a>
+          </div>
+
         </div>
 
         <div class="mb-3">

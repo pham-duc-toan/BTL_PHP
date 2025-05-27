@@ -99,6 +99,8 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
 
               </div>
               <?php include __DIR__ . '\components\quick_checkout_modal.php'; ?>
+              <?php include_once __DIR__ . '\components\add_address_modal.php'; ?>
+              <?php include_once __DIR__ . '\components\confirm_modal.php'; ?>
             <?php endif; ?>
           </div>
         </div>
@@ -127,6 +129,12 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
 <?php include "layout/footer.php"; ?>
 <!-- script modal quick checkout  -->
 <script>
+  let currentAddressContext = "checkout";
+
+  function setAddAddressMode(mode) {
+    currentAddressContext = mode;
+  }
+
   $(document).ready(function() {
     // Khi bấm nút Mua ngay
     $('.btn-buy-now').on('click', function() {
@@ -138,7 +146,8 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
       $('#quickProductName').val(name);
       $('#quickProductPrice').val(price);
 
-      loadQuickAddresses(); // gọi danh sách địa chỉ riêng cho modal Mua ngay
+      setAddAddressMode('quick'); // đảm bảo context đúng
+      loadQuickAddresses();
 
       const modal = new bootstrap.Modal(document.getElementById("quickCheckoutModal"));
       modal.show();
@@ -163,19 +172,99 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
         })
         .catch(() => alert("Không thể kết nối máy chủ."));
     });
+
+    // Xử lý thêm địa chỉ từ modal
+    document.getElementById("addAddressForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      fetch('/cuahangtaphoa/api/add_address.php', {
+          method: 'POST',
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            this.reset();
+            bootstrap.Modal.getInstance(document.getElementById("addAddressModal")).hide();
+
+            // Mở lại modal quickCheckout
+            const quickModal = new bootstrap.Modal(document.getElementById("quickCheckoutModal"));
+            quickModal.show();
+
+            loadQuickAddresses(data.new_id); // Tự động chọn địa chỉ vừa thêm
+
+            // Hiện toast (nếu có)
+            fetch('/cuahangtaphoa/components/session_toast.php')
+              .then(res => res.text())
+              .then(html => {
+                document.body.insertAdjacentHTML('beforeend', html);
+                const toast = new bootstrap.Toast(document.getElementById("toastSuccess"));
+                toast.show();
+              });
+          } else {
+            document.getElementById("toastErrorMessage").textContent = data.error;
+            new bootstrap.Toast(document.getElementById("toastError")).show();
+          }
+        });
+    });
+
+  });
+  //xoa dia chi
+  document.getElementById("confirmForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    console.log("action:", form.action);
+
+    const type = form.dataset.type;
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          alert(data.message || "Xoá thất bại!");
+          return;
+        }
+
+        // ✅ Đóng modal xác nhận
+        bootstrap.Modal.getInstance(document.getElementById("confirmModal")).hide();
+
+        if (type === "quick") {
+          const quickModal = new bootstrap.Modal(document.getElementById("quickCheckoutModal"));
+          quickModal.show();
+          loadQuickAddresses();
+        } else {
+          const checkoutModal = new bootstrap.Modal(document.getElementById("checkoutModal"));
+          checkoutModal.show();
+          loadAddresses();
+        }
+
+
+      })
+      .catch(err => {
+        console.error("Lỗi xoá địa chỉ:", err);
+        alert("Lỗi trong quá trình xoá. Vui lòng thử lại.");
+      });
   });
 
-  // Hàm load địa chỉ giao hàng cho modal Mua ngay
-  function loadQuickAddresses() {
+  // Tải địa chỉ cho modal Mua ngay
+  function loadQuickAddresses(selected = null) {
     const addressList = document.getElementById("quickAddressList");
     addressList.innerHTML = `<div class="text-muted">Đang tải...</div>`;
+
     fetch('/cuahangtaphoa/api/address_api.php')
       .then(res => res.json())
       .then(data => {
         addressList.innerHTML = "";
 
         if (data.length === 0) {
-          addressList.innerHTML = '<div class="text-danger">Chưa có địa chỉ nào. Hãy thêm mới trước khi mua.</div>';
+          addressList.innerHTML = `
+          <div class="text-danger">Chưa có địa chỉ nào. Hãy thêm mới trước khi mua.</div>`;
           return;
         }
 
@@ -183,17 +272,45 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
           const wrapper = document.createElement("label");
           wrapper.className = "list-group-item";
           wrapper.innerHTML = `
-            <input type="radio" name="address_option" value="${addr.id}" class="form-check-input me-1" required>
-            ${addr.full_name} - ${addr.phone} - ${addr.address}
-          `;
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <input type="radio" name="address_option" value="${addr.id}" class="form-check-input me-1" required id="addr-${addr.id}">
+              <label for="addr-${addr.id}">
+                ${addr.full_name} - ${addr.phone} - ${addr.address}
+              </label>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-address" data-id="${addr.id}">Xoá</button>
+          </div>
+        `;
           addressList.appendChild(wrapper);
-        });
 
-        // Gán sự kiện chọn địa chỉ
-        document.querySelectorAll('input[name="address_option"]').forEach(radio => {
+          // Gán sự kiện chọn địa chỉ
+          const radio = wrapper.querySelector('input[name="address_option"]');
           radio.addEventListener("change", function() {
             document.getElementById("quickSelectedAddressId").value = this.value;
           });
+
+          // Nếu là địa chỉ mới thêm thì auto chọn
+          if (selected && addr.id === selected) {
+            radio.checked = true;
+            document.getElementById("quickSelectedAddressId").value = addr.id;
+          }
+
+          // Gán sự kiện xóa bằng confirm modal
+          wrapper.querySelector(".btn-delete-address").addEventListener("click", function() {
+            const id = this.dataset.id;
+
+            const form = document.getElementById("confirmForm");
+            form.action = "/cuahangtaphoa/api/delete_address.php";
+            document.getElementById("confirmDeleteId").value = id;
+            document.querySelector("#confirmModal .modal-body").textContent =
+              "Bạn có chắc chắn muốn gỡ địa chỉ này khỏi tài khoản?";
+            form.dataset.type = "quick"; // ❗ Đây là điểm QUAN TRỌNG phải có
+
+            const modal = new bootstrap.Modal(document.getElementById("confirmModal"));
+            modal.show();
+          });
+
         });
       });
   }

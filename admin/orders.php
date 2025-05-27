@@ -11,7 +11,12 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
   exit;
 }
 
-$result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o JOIN users u ON o.user_id = u.id JOIN addresses a ON o.address_id = a.id ORDER BY o.order_date DESC");
+$result = $conn->query("SELECT o.*, u.name AS user_name, a.full_name, a.phone, a.address 
+  FROM orders o 
+  JOIN users u ON o.user_id = u.id 
+  JOIN addresses a ON o.address_id = a.id 
+  ORDER BY o.order_date DESC");
+
 ?>
 <div class="container py-4">
   <h2>Quản lý đơn hàng</h2>
@@ -20,7 +25,7 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
       <tr>
         <th>Mã đơn</th>
         <th>Khách hàng</th>
-        <th>Địa chỉ</th>
+        <th>Thông tin đặt hàng</th>
         <th>Ngày đặt</th>
         <th>Thanh toán</th>
         <th>Trạng thái</th>
@@ -34,7 +39,12 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
         <tr>
           <td><?= $row['id'] ?></td>
           <td><?= $row['user_name'] ?></td>
-          <td><?= $row['address'] ?></td>
+          <td>
+            Họ tên: <strong><?= $row['full_name'] ?></strong><br>
+            Số điện thoại: <?= $row['phone'] ?><br>
+            Địa chỉ: <span class="text-muted"><?= $row['address'] ?></span>
+          </td>
+
           <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
           <td><?= $row['payment_method'] === 'cod' ? 'COD' : 'Chuyển khoản' ?></td>
           <td><?= $row['order_status'] ?></td>

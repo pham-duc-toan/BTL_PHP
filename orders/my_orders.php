@@ -12,7 +12,7 @@ if (!isset($_SESSION['user'])) {
 }
 
 $user_id = $_SESSION['user']['id'];
-$stmt = $conn->prepare("SELECT o.*, a.address 
+$stmt = $conn->prepare("SELECT o.*,  a.full_name, a.phone, a.address 
                         FROM orders o 
                         JOIN addresses a ON o.address_id = a.id 
                         WHERE o.user_id = ? 
@@ -29,7 +29,7 @@ $result = $stmt->get_result();
       <tr>
         <th>Mã đơn</th>
         <th>Ngày đặt</th>
-        <th>Địa chỉ</th>
+        <th>Thông tin đặt hàng</th>
         <th>Tổng tiền</th>
         <th>Phương thức</th>
         <th>Trạng thái</th>
@@ -46,7 +46,11 @@ $result = $stmt->get_result();
           <tr>
             <td><?= $row['id'] ?></td>
             <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
-            <td><?= htmlspecialchars($row['address']) ?></td>
+            <td>
+              Họ tên: <strong><?= $row['full_name'] ?></strong><br>
+              Số điện thoại: <?= $row['phone'] ?><br>
+              Địa chỉ: <span class="text-muted"><?= $row['address'] ?></span>
+            </td>
             <td><?= number_format($row['total_amount'], 0, ',', '.') ?> đ</td>
             <td><?= $row['payment_method'] === 'cod' ? 'Thanh toán khi nhận' : 'Chuyển khoản' ?></td>
             <td><?= ucfirst($row['order_status']) ?></td>
