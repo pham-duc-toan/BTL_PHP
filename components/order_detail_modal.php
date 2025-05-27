@@ -4,7 +4,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="orderDetailLabel">Chi tiết đơn hàng</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+
       </div>
       <div class="modal-body" id="order-detail-content">
         <p class="text-muted">Đang tải dữ liệu...</p>

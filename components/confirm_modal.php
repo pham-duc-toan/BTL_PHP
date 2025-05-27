@@ -8,7 +8,7 @@
 
         <div class="modal-header bg-danger text-white">
           <h5 class="modal-title">Xác nhận xoá</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng"></button>
+
         </div>
         <div class="modal-body">
           Bạn có chắc chắn muốn xoá sản phẩm này khỏi giỏ hàng không?
