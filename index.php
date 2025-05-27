@@ -59,7 +59,7 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
                 <!-- Modal chọn size và số lượng -->
                 <div class="modal fade" id="sizeModal<?= $row['id'] ?>" tabindex="-1">
                   <div class="modal-dialog">
-                    <form action="add_to_cart.php" method="post" class="modal-content">
+                    <form action="/cuahangtaphoa/api/add_to_cart.php" method="post" class="modal-content">
                       <div class="modal-header">
                         <h5 class="modal-title">Chọn size và số lượng</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

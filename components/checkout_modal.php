@@ -2,7 +2,7 @@
 <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form action="process_checkout.php" method="post" id="checkoutForm">
+      <form action="/cuahangtaphoa/api/process_checkout.php" method="post" id="checkoutForm">
         <div class="modal-header">
           <h5 class="modal-title">🧾 Thanh toán</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -23,8 +23,7 @@
             <label class="form-label">Phương thức thanh toán</label>
             <select name="payment_method" class="form-select" required>
               <option value="cod">Thanh toán khi nhận hàng</option>
-              <option value="momo">Ví MoMo</option>
-              <option value="bank">Chuyển khoản ngân hàng</option>
+              <option value="bank_transfer">Ví MoMo</option>
             </select>
           </div>
 

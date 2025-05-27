@@ -32,7 +32,7 @@ $role = $user['role'] ?? null;
               <li class="nav-item"><a class="nav-link" href="admin_orders.php">📦 Quản lý đơn hàng</a></li>
             <?php else: ?>
               <?php include_once __DIR__ . '/components/cart_header.php'; ?>
-              <li class="nav-item"><a class="nav-link" href="my_orders.php">📜 Đơn hàng của tôi</a></li>
+              <li class="nav-item"><a class="nav-link" href="/cuahangtaphoa/orders/my_orders.php">📜 Đơn hàng của tôi</a></li>
             <?php endif; ?>
             <li class="nav-item"><a class="nav-link" href="/cuahangtaphoa/auth/logout.php">🚪 Đăng xuất</a></li>
           <?php else: ?>
