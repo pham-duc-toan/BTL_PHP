@@ -4,9 +4,8 @@ session_start();
 include_once __DIR__ . '/../helper/db.php';
 include_once __DIR__ . '/../helper/functions.php';
 
-
 if (!isset($_SESSION['user'])) {
-  $_SESSION['error'] = "Bạn phải đăng nhập để huỷ đơn hàng.";
+  $_SESSION['error'] = "Vui lòng đăng nhập để huỷ đơn hàng.";
   header("Location: /cuahangtaphoa/orders/my_orders.php");
   exit;
 }
@@ -21,7 +20,7 @@ if (!$order_id) {
   exit;
 }
 
-// Kiểm tra đơn có thuộc user không và trạng thái hợp lệ
+// Lấy đơn hàng để kiểm tra
 $sql = "SELECT * FROM orders WHERE id = ? AND user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ss", $order_id, $user_id);
@@ -35,25 +34,54 @@ if ($result->num_rows === 0) {
 }
 
 $order = $result->fetch_assoc();
+
+// Chỉ cho phép huỷ nếu trạng thái là đang xử lý
 if (!in_array($order['order_status'], ['chuẩn bị lấy hàng', 'đang giao'])) {
   $_SESSION['error'] = "Đơn hàng không thể huỷ ở trạng thái hiện tại.";
   header("Location: /cuahangtaphoa/orders/my_orders.php");
   exit;
 }
 
-$new_status = ($order['payment_method'] === 'bank_transfer') ? 'chưa hoàn tiền' : 'yêu cầu huỷ';
+// Tùy theo phương thức thanh toán
+// Nếu bank_transfer → insert vào bảng refund_requests
+if ($order['payment_method'] === 'bank_transfer') {
+  $full_name = $_POST['full_name'] ?? '';
+  $bank_number = $_POST['bank_number'] ?? '';
 
-if ($new_status === 'chưa hoàn tiền' && !$bank_info) {
-  $_SESSION['error'] = "Vui lòng nhập STK để hoàn tiền.";
+  if (!$full_name || !$bank_number) {
+    $_SESSION['error'] = "Vui lòng điền đầy đủ thông tin hoàn tiền.";
+    header("Location: /cuahangtaphoa/orders/my_orders.php");
+    exit;
+  }
+
+  // Insert vào bảng refund_requests
+  $insert_sql = "INSERT INTO refund_requests (order_id, full_name, bank_number, total_amount) 
+                 VALUES (?, ?, ?, ?)";
+  $stmt = $conn->prepare($insert_sql);
+  $stmt->bind_param("sssd", $order_id, $full_name, $bank_number, $order['total_amount']);
+  $stmt->execute();
+
+  // Cập nhật trạng thái đơn
+  $update_sql = "UPDATE orders SET order_status = 'chưa hoàn tiền' WHERE id = ?";
+  $stmt = $conn->prepare($update_sql);
+  $stmt->bind_param("s", $order_id);
+  $stmt->execute();
+
+  $_SESSION['success'] = "Yêu cầu hoàn tiền đã được ghi nhận.";
   header("Location: /cuahangtaphoa/orders/my_orders.php");
   exit;
+} else {
+  // COD → huỷ trực tiếp
+  $new_status = 'đã huỷ';
+  $update_sql = "UPDATE orders SET order_status = ? WHERE id = ?";
+  $stmt = $conn->prepare($update_sql);
+  if (!$stmt) {
+    die("Lỗi prepare: " . $conn->error);
+  }
+  $stmt->bind_param("ss", $new_status, $order_id);
+  $stmt->execute();
+  $_SESSION['success'] = "Đơn hàng đã được huỷ thành công.";
 }
 
-$update_sql = "UPDATE orders SET order_status = ?, refund_info = ? WHERE id = ?";
-$stmt = $conn->prepare($update_sql);
-$stmt->bind_param("sss", $new_status, $bank_info, $order_id);
-$stmt->execute();
-
-$_SESSION['success'] = "Yêu cầu huỷ đã được gửi.";
 header("Location: /cuahangtaphoa/orders/my_orders.php");
 exit;
