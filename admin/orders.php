@@ -37,30 +37,40 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
           <td><?= $row['payment_method'] === 'cod' ? 'COD' : 'Chuyển khoản' ?></td>
           <td><?= $row['order_status'] ?></td>
           <td>
-            <form method="POST" action="orders/update_status.php" class="d-inline me-2">
-              <input type="hidden" name="order_id" value="<?= $row['id'] ?>">
-              <select name="new_status"
-                class="form-select form-select-sm d-inline w-auto auto-submit-status"
-                data-order-id="<?= $row['id'] ?>">
+            <?php
+            $status = $row['order_status'];
+            $orderId = $row['id'];
 
-                <?php
-                $options = [];
-                if ($row['order_status'] === 'chuẩn bị lấy hàng') $options = ['đang giao', 'đã huỷ'];
-                elseif ($row['order_status'] === 'đang giao') $options = ['đã giao', 'đã huỷ'];
-                elseif ($row['order_status'] === 'yêu cầu huỷ') $options = ['đã huỷ'];
-                elseif ($row['order_status'] === 'chưa thanh toán') $options = ['chuẩn bị lấy hàng'];
-                elseif ($row['order_status'] === 'chưa hoàn tiền') $options = ['đã hoàn tiền'];
-                foreach ($options as $op): ?>
-                  <option value="<?= $op ?>"><?= ucfirst($op) ?></option>
-                <?php endforeach; ?>
-              </select>
+            if ($status === 'chưa hoàn tiền') {
+              // Chỉ hiển thị nút "Hoàn tiền"
+              echo '<button class="btn btn-sm btn-outline-info btn-refund-info" data-order-id="' . $orderId . '">Hoàn tiền</button>';
+            } else {
+              // Các trạng thái khác có thể có dropdown thay đổi trạng thái
+              $options = [];
 
-            </form>
+              if ($status === 'chuẩn bị lấy hàng') {
+                $options = ['--chọn--', 'đang giao', 'đã huỷ'];
+              } elseif ($status === 'đang giao') {
+                $options = ['--chọn--', 'đã giao', 'đã huỷ'];
+              }
 
-            <?php if ($row['order_status'] === 'chưa hoàn tiền'): ?>
-              <button class="btn btn-sm btn-outline-info btn-refund-info" data-order-id="<?= $row['id'] ?>">Thông tin hoàn tiền</button>
-            <?php endif; ?>
+              if (!empty($options)) {
+            ?>
+                <select class="form-select form-select-sm d-inline w-auto auto-submit-status mt-2"
+                  data-order-id="<?= $orderId ?>">
+                  <?php foreach ($options as $op): ?>
+                    <option value="<?= $op ?>" <?= $op === '--chọn--' ? 'selected disabled' : '' ?>>
+                      <?= ucfirst($op) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+            <?php
+              }
+            }
+            ?>
           </td>
+
+
 
         </tr>
       <?php endwhile; ?>
@@ -79,16 +89,25 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
           <p><strong>Họ tên người nhận:</strong> <span id="refund_full_name"></span></p>
           <p><strong>Số tài khoản:</strong> <span id="refund_bank_number"></span></p>
           <p><strong>Số tiền hoàn:</strong> <span id="refund_total"></span> đ</p>
+          <input type="hidden" id="refund_order_id">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" id="confirmRefundBtn">Đã hoàn tiền</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
         </div>
       </div>
     </div>
   </div>
+
   <!-- end modal bank info -->
 </div>
 <?php include_once __DIR__ . '/../layout/footer.php'; ?>
-<!-- call thong tin bank -->
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
   $(document).ready(function() {
+    // Gọi modal hoàn tiền
     $('.btn-refund-info').on('click', function() {
       const orderId = $(this).data('order-id');
 
@@ -100,6 +119,7 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
         },
         success: function(data) {
           if (data.status === 'success') {
+            $('#refund_order_id').val(orderId);
             $('#refund_full_name').text(data.data.full_name);
             $('#refund_bank_number').text(data.data.bank_number);
             $('#refund_total').text(Number(data.data.total_amount).toLocaleString());
@@ -109,30 +129,47 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.address FROM orders o
           }
         },
         error: function() {
-          alert("Không thể lấy thông tin hoàn tiền.");
+          location.reload();
         }
       });
     });
-  });
-</script>
 
-<!-- doi trang thai -->
-<script>
-  $(document).ready(function() {
+    // Bấm "Đã hoàn tiền"
+    $('#confirmRefundBtn').on('click', function() {
+      const orderId = $('#refund_order_id').val();
+
+      $.post('/cuahangtaphoa/orders/update_status.php', {
+        order_id: orderId,
+        new_status: "đã hoàn tiền"
+      }, function(res) {
+        if (res.status === 'success') {
+          location.reload();
+        } else {
+          location.reload();
+        }
+      }, 'json');
+    });
+
+    // Đổi trạng thái đơn hàng bằng dropdown
     $('.auto-submit-status').on('change', function() {
       const orderId = $(this).data('order-id');
       const newStatus = $(this).val();
+
+      // Không gửi nếu vẫn chọn mặc định
+      if (!newStatus || newStatus === '--chọn--') return;
 
       $.post('/cuahangtaphoa/orders/update_status.php', {
         order_id: orderId,
         new_status: newStatus
       }, function(res) {
         if (res.status === 'success') {
-          location.reload(); // reload để thấy cập nhật
+          location.reload();
         } else {
-          alert(res.message);
+
+          location.reload();
         }
       }, 'json');
     });
+
   });
 </script>
