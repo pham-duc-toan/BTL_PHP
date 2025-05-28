@@ -1,0 +1,1 @@
+INSERT INTO orders (user_id, address_id, payment_method, total_amount, order_status) VALUES (0, 78, 'cod', 99750.00, 'chuẩn bị lấy hàng')

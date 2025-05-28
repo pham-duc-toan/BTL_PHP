@@ -165,13 +165,17 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            window.location.href = '/cuahangtaphoa/user_orders.php';
+            window.location.href = '/cuahangtaphoa/orders/my_orders.php';
           } else {
             alert(data.error || "Đã xảy ra lỗi, vui lòng thử lại.");
           }
         })
-        .catch(() => alert("Không thể kết nối máy chủ."));
+        .catch((err) => {
+          console.error("Lỗi fetch:", err);
+          alert("Không thể kết nối máy chủ.");
+        });
     });
+
 
     // Xử lý thêm địa chỉ từ modal
     document.getElementById("addAddressForm").addEventListener("submit", function(e) {

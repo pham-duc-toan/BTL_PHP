@@ -42,8 +42,8 @@ $mo_order_id = $order_id . "_" . $timestamp;
 $requestId = $mo_order_id;
 $orderInfo = "Thanh toán đơn hàng $order_id";
 
-$redirectUrl = "https://47ce-42-116-243-148.ngrok-free.app/cuahangtaphoa/momo_return.php";
-$ipnUrl = "https://47ce-42-116-243-148.ngrok-free.app/cuahangtaphoa/momo_return.php";
+$redirectUrl = "https://4772-42-116-243-148.ngrok-free.app/cuahangtaphoa/momo_return.php";
+$ipnUrl = "https://4772-42-116-243-148.ngrok-free.app/cuahangtaphoa/momo_return.php";
 $requestType = "captureWallet";
 
 // Tạo chữ ký
