@@ -135,47 +135,52 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC LIMIT $s
     currentAddressContext = mode;
   }
 
-  $(document).ready(function() {
+  document.addEventListener("DOMContentLoaded", function() {
     // Khi bấm nút Mua ngay
-    $('.btn-buy-now').on('click', function() {
-      const id = $(this).data('product-id');
-      const name = $(this).data('product-name');
-      const price = $(this).data('price');
+    document.querySelectorAll('.btn-buy-now').forEach(button => {
+      button.addEventListener('click', function() {
+        const id = this.dataset.productId;
+        const name = this.dataset.productName;
+        const price = this.dataset.price;
 
-      $('#quickProductId').val(id);
-      $('#quickProductName').val(name);
-      $('#quickProductPrice').val(price);
+        document.getElementById('quickProductId').value = id;
+        document.getElementById('quickProductName').value = name;
+        document.getElementById('quickProductPrice').value = price;
 
-      setAddAddressMode('quick'); // đảm bảo context đúng
-      loadQuickAddresses();
+        setAddAddressMode('quick');
+        loadQuickAddresses();
 
-      const modal = new bootstrap.Modal(document.getElementById("quickCheckoutModal"));
-      modal.show();
+        const modal = new bootstrap.Modal(document.getElementById("quickCheckoutModal"));
+        modal.show();
+      });
     });
 
     // Gửi form mua ngay
-    $('#quickCheckoutForm').on('submit', function(e) {
-      e.preventDefault();
-      const formData = new FormData(this);
+    const quickForm = document.getElementById('quickCheckoutForm');
+    if (quickForm) {
+      quickForm.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-      fetch('/cuahangtaphoa/api/quick_checkout.php', {
-          method: 'POST',
-          body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            window.location.href = '/cuahangtaphoa/orders/my_orders.php';
-          } else {
-            alert(data.error || "Đã xảy ra lỗi, vui lòng thử lại.");
-          }
-        })
-        .catch((err) => {
-          console.error("Lỗi fetch:", err);
-          alert("Không thể kết nối máy chủ.");
-        });
-    });
+        const formData = new FormData(quickForm);
 
+        fetch('/cuahangtaphoa/api/quick_checkout.php', {
+            method: 'POST',
+            body: formData
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              window.location.href = '/cuahangtaphoa/orders/my_orders.php';
+            } else {
+              alert(data.error || "Đã xảy ra lỗi, vui lòng thử lại.");
+            }
+          })
+          .catch((err) => {
+            console.error("Lỗi fetch:", err);
+            alert("Không thể kết nối máy chủ.");
+          });
+      });
+    }
 
     // Xử lý thêm địa chỉ từ modal
     document.getElementById("addAddressForm").addEventListener("submit", function(e) {

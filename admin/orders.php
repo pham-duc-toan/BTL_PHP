@@ -140,126 +140,138 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.full_name, a.phone, a
 
 <!-- script cot hanh dong  -->
 <script>
-  $(document).ready(function() {
+  document.addEventListener('DOMContentLoaded', function() {
     // Gọi modal hoàn tiền
-    $('.btn-refund-info').on('click', function() {
-      const orderId = $(this).data('order-id');
+    document.querySelectorAll('.btn-refund-info').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const orderId = btn.dataset.orderId;
 
-      $.ajax({
-        url: '/cuahangtaphoa/api/get_refund_info.php',
-        method: 'POST',
-        data: {
-          order_id: orderId
-        },
-        success: function(data) {
-          if (data.status === 'success') {
-            $('#refund_order_id').val(orderId);
-            $('#refund_full_name').text(data.data.full_name);
-            $('#refund_bank_number').text(data.data.bank_number);
-            $('#refund_total').text(Number(data.data.total_amount).toLocaleString());
-            $('#refundInfoModal').modal('show');
-          } else {
-            alert(data.message);
-          }
-        },
-        error: function() {
-          location.reload();
-        }
+        const formData = new FormData();
+        formData.append('order_id', orderId);
+
+        fetch('/cuahangtaphoa/api/get_refund_info.php', {
+            method: 'POST',
+            body: formData
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success') {
+              document.getElementById('refund_order_id').value = orderId;
+              document.getElementById('refund_full_name').textContent = data.data.full_name;
+              document.getElementById('refund_bank_number').textContent = data.data.bank_number;
+              document.getElementById('refund_total').textContent = Number(data.data.total_amount).toLocaleString();
+
+              new bootstrap.Modal(document.getElementById('refundInfoModal')).show();
+            } else {
+              alert(data.message);
+            }
+          })
+          .catch(() => {
+            location.reload();
+          });
       });
     });
 
     // Bấm "Đã hoàn tiền"
-    $('#confirmRefundBtn').on('click', function() {
-      const orderId = $('#refund_order_id').val();
+    document.getElementById('confirmRefundBtn').addEventListener('click', () => {
+      const orderId = document.getElementById('refund_order_id').value;
 
-      $.post('/cuahangtaphoa/orders/update_status.php', {
-        order_id: orderId,
-        new_status: "đã hoàn tiền"
-      }, function(res) {
-        if (res.status === 'success') {
+      const formData = new FormData();
+      formData.append('order_id', orderId);
+      formData.append('new_status', 'đã hoàn tiền');
+
+      fetch('/cuahangtaphoa/orders/update_status.php', {
+          method: 'POST',
+          body: formData
+        })
+        .then(res => res.json())
+        .then(res => {
           location.reload();
-        } else {
+        })
+        .catch(() => {
           location.reload();
-        }
-      }, 'json');
+        });
     });
 
     // Đổi trạng thái đơn hàng bằng dropdown
-    $('.auto-submit-status').on('change', function() {
-      const orderId = $(this).data('order-id');
-      const newStatus = $(this).val();
+    document.querySelectorAll('.auto-submit-status').forEach(select => {
+      select.addEventListener('change', () => {
+        const newStatus = select.value;
+        if (!newStatus || newStatus === '--chọn--') return;
 
-      // Không gửi nếu vẫn chọn mặc định
-      if (!newStatus || newStatus === '--chọn--') return;
+        const orderId = select.dataset.orderId;
 
-      $.post('/cuahangtaphoa/orders/update_status.php', {
-        order_id: orderId,
-        new_status: newStatus
-      }, function(res) {
-        if (res.status === 'success') {
-          location.reload();
-        } else {
+        const formData = new FormData();
+        formData.append('order_id', orderId);
+        formData.append('new_status', newStatus);
 
-          location.reload();
-        }
-      }, 'json');
+        fetch('/cuahangtaphoa/orders/update_status.php', {
+            method: 'POST',
+            body: formData
+          })
+          .then(res => res.json())
+          .then(res => {
+            location.reload();
+          })
+          .catch(() => {
+            location.reload();
+          });
+      });
     });
-
   });
 </script>
+
 <!-- script  cot chi tiet don hang  -->
 <script>
-  // Chi tiết đơn hàng
-  $('.view-details').on('click', function() {
-    const orderId = $(this).data('id');
-    $('#order-detail-content').html('<p class="text-muted">Đang tải...</p>');
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('.view-details').forEach(button => {
+      button.addEventListener('click', function() {
+        const orderId = this.dataset.id;
+        const detailContent = document.getElementById('order-detail-content');
+        detailContent.innerHTML = '<p class="text-muted">Đang tải...</p>';
 
-    $.ajax({
-      url: '/cuahangtaphoa/api/order_items_api.php',
-      method: 'GET',
-      data: {
-        order_id: orderId
-      },
-      dataType: 'json',
-      success: function(response) {
-        if (response.length === 0) {
-          $('#order-detail-content').html('<p class="text-muted">Không có sản phẩm nào.</p>');
-          return;
-        }
+        fetch(`/cuahangtaphoa/api/order_items_api.php?order_id=${encodeURIComponent(orderId)}`)
+          .then(res => res.json())
+          .then(response => {
+            if (response.length === 0) {
+              detailContent.innerHTML = '<p class="text-muted">Không có sản phẩm nào.</p>';
+              return;
+            }
 
-        let html = `
-        <table class="table table-bordered table-sm align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Ảnh</th>
-              <th>Tên sản phẩm</th>
-              <th>Size</th>
-              <th>Số lượng</th>
-              <th>Đơn giá</th>
-              <th>Thành tiền</th>
-            </tr>
-          </thead><tbody>`;
+            let html = `
+              <table class="table table-bordered table-sm align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Ảnh</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Size</th>
+                    <th>Số lượng</th>
+                    <th>Đơn giá</th>
+                    <th>Thành tiền</th>
+                  </tr>
+                </thead><tbody>`;
 
-        response.forEach(item => {
-          html += `
-          <tr>
-            <td class="text-center">
-              <img src="${item.image}" width="60" class="img-thumbnail">
-            </td>
-            <td>${item.name}</td>
-            <td>${item.size}</td>
-            <td>${item.quantity}</td>
-            <td>${Number(item.price).toLocaleString()} đ</td>
-            <td>${(item.price * item.quantity).toLocaleString()} đ</td>
-          </tr>`;
-        });
+            response.forEach(item => {
+              html += `
+                <tr>
+                  <td class="text-center">
+                    <img src="${item.image}" width="60" class="img-thumbnail">
+                  </td>
+                  <td>${item.name}</td>
+                  <td>${item.size}</td>
+                  <td>${item.quantity}</td>
+                  <td>${Number(item.price).toLocaleString()} đ</td>
+                  <td>${(item.price * item.quantity).toLocaleString()} đ</td>
+                </tr>`;
+            });
 
-        html += '</tbody></table>';
-        $('#order-detail-content').html(html);
-      },
-      error: function() {
-        $('#order-detail-content').html('<p class="text-danger">Không thể tải chi tiết đơn hàng.</p>');
-      }
+            html += '</tbody></table>';
+            detailContent.innerHTML = html;
+          })
+          .catch(() => {
+            detailContent.innerHTML = '<p class="text-danger">Không thể tải chi tiết đơn hàng.</p>';
+          });
+      });
     });
   });
 </script>

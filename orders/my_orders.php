@@ -160,24 +160,21 @@ $result = $stmt->get_result();
 
 <!-- script chi tiet order -->
 <script>
-  $('.view-details').on('click', function() {
-    const orderId = $(this).data('id');
-    $('#order-detail-content').html('<p class="text-muted">Đang tải...</p>');
+  document.querySelectorAll('.view-details').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const orderId = this.dataset.id;
+      const contentEl = document.getElementById('order-detail-content');
+      contentEl.innerHTML = '<p class="text-muted">Đang tải...</p>';
 
-    $.ajax({
-      url: '/cuahangtaphoa/api/order_items_api.php',
-      method: 'GET',
-      data: {
-        order_id: orderId
-      },
-      dataType: 'json',
-      success: function(response) {
-        if (response.length === 0) {
-          $('#order-detail-content').html('<p class="text-muted">Không có sản phẩm nào.</p>');
-          return;
-        }
+      fetch(`/cuahangtaphoa/api/order_items_api.php?order_id=${encodeURIComponent(orderId)}`)
+        .then(res => res.json())
+        .then(response => {
+          if (response.length === 0) {
+            contentEl.innerHTML = '<p class="text-muted">Không có sản phẩm nào.</p>';
+            return;
+          }
 
-        let html = `
+          let html = `
             <table class="table table-sm table-bordered">
               <thead>
                 <tr>
@@ -191,62 +188,65 @@ $result = $stmt->get_result();
               </thead>
               <tbody>`;
 
+          response.forEach(item => {
+            html += `
+              <tr>
+                <td class="text-center">
+                  <img src="${item.image}" alt="${item.name}" width="60" class="img-thumbnail d-block mx-auto">
+                </td>
+                <td>${item.name}</td>
+                <td>${item.size}</td>
+                <td>${item.quantity}</td>
+                <td>${Number(item.price).toLocaleString()} đ</td>
+                <td>${(item.price * item.quantity).toLocaleString()} đ</td>
+              </tr>`;
+          });
 
-        response.forEach(item => {
-          html += `
-            <tr>
-              <td class="text-center">
-              <img src="${item.image}" alt="${item.name}" width="60" class="img-thumbnail d-block mx-auto">
-            </td>
-
-              <td>${item.name}</td>
-              <td>${item.size}</td>
-              <td>${item.quantity}</td>
-              <td>${Number(item.price).toLocaleString()} đ</td>
-              <td>${(item.price * item.quantity).toLocaleString()} đ</td>
-            </tr>`;
-
+          html += '</tbody></table>';
+          contentEl.innerHTML = html;
+        })
+        .catch(() => {
+          contentEl.innerHTML = '<p class="text-danger">Không thể tải chi tiết đơn hàng.</p>';
         });
-
-        html += '</tbody></table>';
-        $('#order-detail-content').html(html);
-      },
-      error: function() {
-        $('#order-detail-content').html('<p class="text-danger">Không thể tải chi tiết đơn hàng.</p>');
-      }
     });
   });
 </script>
+
 <!-- script bank -->
 <script>
-  // Mở modal và gán order_id
-  $('.btn-cancel-order').on('click', function() {
-    const orderId = $(this).data('order-id');
-    $('#cancel_order_id').val(orderId);
-    $('#cancelModal').modal('show');
+  document.querySelectorAll('.btn-cancel-order').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const orderId = btn.dataset.orderId;
+      document.getElementById('cancel_order_id').value = orderId;
+      const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+      modal.show();
+    });
   });
 
-  // Gửi AJAX khi submit form modal
-  $('#cancelForm').on('submit', function(e) {
+
+  document.getElementById('cancelForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    $.ajax({
-      url: '/cuahangtaphoa/orders/cancel_request.php',
-      method: 'POST',
-      data: $(this).serialize(),
-      success: function(res) {
+    const formData = new FormData(this);
+
+    fetch('/cuahangtaphoa/orders/cancel_request.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(res => {
         if (res.status === 'success') {
-          window.location.reload(); // Toast sẽ hiển thị nhờ session
+          window.location.reload(); // toast hiển thị do dùng session
         } else {
           alert(res.message);
         }
-      },
-      error: function() {
+      })
+      .catch(() => {
         alert("Có lỗi xảy ra, vui lòng thử lại!");
-      }
-    });
+      });
   });
 </script>
+
 <!-- script change address  -->
 <script>
   let currentAddressOrderId = null;
