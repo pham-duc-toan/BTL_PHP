@@ -11,20 +11,97 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
   exit;
 }
 
-$result = $conn->query("SELECT o.*, u.name AS user_name, a.full_name, a.phone, a.address 
-  FROM orders o 
-  JOIN users u ON o.user_id = u.id 
-  JOIN addresses a ON o.address_id = a.id 
-  ORDER BY o.order_date DESC");
+$status_filter = $_GET['filter'] ?? 'all';
+$sort_by = $_GET['sort_by'] ?? 'order_date';
+$sort_dir = $_GET['sort_dir'] ?? 'DESC';
+$search_date = $_GET['search_date'] ?? '';
+
+// Build query
+$sql = "SELECT o.*, u.name AS user_name, a.full_name, a.phone, a.address 
+        FROM orders o 
+        JOIN users u ON o.user_id = u.id 
+        JOIN addresses a ON o.address_id = a.id 
+        WHERE 1=1";
+
+// Filter theo trạng thái
+if ($status_filter !== 'all') {
+  $sql .= " AND o.order_status = '" . $conn->real_escape_string($status_filter) . "'";
+}
+
+// Tìm kiếm theo ngày
+if (!empty($search_date)) {
+  $sql .= " AND DATE_FORMAT(o.order_date, '%Y-%m-%d') LIKE '" . $conn->real_escape_string($search_date) . "%'";
+}
+
+// Sắp xếp
+$allowed_sort = ['order_date', 'total_amount', 'full_name'];
+$allowed_dir = ['ASC', 'DESC'];
+if (!in_array($sort_by, $allowed_sort)) $sort_by = 'order_date';
+if (!in_array($sort_dir, $allowed_dir)) $sort_dir = 'DESC';
+
+$sql .= " ORDER BY $sort_by $sort_dir";
+
+$result = $conn->query($sql);
 
 ?>
 <div class="container py-4">
   <h2>Quản lý đơn hàng</h2>
+
+  <!-- Tabs trạng thái -->
+  <ul class="nav nav-tabs mb-3">
+    <?php
+    $tabs = ['all' => 'Tất cả', 'chưa thanh toán' => 'Chưa thanh toán', 'chuẩn bị lấy hàng' => 'Chuẩn bị lấy hàng', 'đang giao' => 'Đang giao', 'đã giao' => 'Đã giao', 'đã huỷ' => 'Đã huỷ', 'chưa hoàn tiền' => 'Chưa hoàn tiền', 'đã hoàn tiền' => 'Đã hoàn tiền'];
+    foreach ($tabs as $key => $label): ?>
+      <li class="nav-item">
+        <a class="nav-link <?= $status_filter == $key ? 'active' : '' ?>"
+          href="?filter=<?= $key ?>&sort_by=<?= $sort_by ?>&sort_dir=<?= $sort_dir ?>&search_date=<?= $search_date ?>">
+          <?= $label ?>
+        </a>
+      </li>
+    <?php endforeach; ?>
+  </ul>
+
+  <!-- Form sort + search -->
+  <form method="GET" class="row g-2 mb-3 justify-content-between align-items-end">
+    <input type="hidden" name="filter" value="<?= htmlspecialchars($status_filter) ?>">
+
+    <div class="col-md-6 d-flex flex-wrap gap-2 align-items-end">
+      <div>
+        <label class="form-label">Sắp xếp theo:</label>
+        <select class="form-select" name="sort_by">
+          <option value="order_date" <?= $sort_by == 'order_date' ? 'selected' : '' ?>>Ngày đặt</option>
+          <option value="total_amount" <?= $sort_by == 'total_amount' ? 'selected' : '' ?>>Tổng tiền</option>
+          <option value="full_name" <?= $sort_by == 'full_name' ? 'selected' : '' ?>>Tên người nhận</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label">Thứ tự:</label>
+        <select class="form-select" name="sort_dir">
+          <option value="ASC" <?= $sort_dir == 'ASC' ? 'selected' : '' ?>>Tăng dần</option>
+          <option value="DESC" <?= $sort_dir == 'DESC' ? 'selected' : '' ?>>Giảm dần</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="col-md-6 d-flex justify-content-end align-items-end">
+      <div class="w-100" style="max-width: 300px;">
+        <label class="form-label">Tìm theo ngày:</label>
+        <input type="text" class="form-control" name="search_date"
+          value="<?= htmlspecialchars($search_date) ?>"
+          placeholder="yyyy hoặc yyyy-mm hoặc yyyy-mm-dd">
+      </div>
+      <div class="ms-2">
+        <button class="btn btn-primary mt-4" type="submit">Áp dụng</button>
+      </div>
+    </div>
+  </form>
+
   <table class="table table-bordered table-striped">
     <thead>
       <tr>
         <th>Mã đơn</th>
-        <th>Khách hàng</th>
+        <th>Tổng tiền</th>
         <th>Thông tin đặt hàng</th>
         <th>Ngày đặt</th>
         <th>Thanh toán</th>
@@ -38,7 +115,7 @@ $result = $conn->query("SELECT o.*, u.name AS user_name, a.full_name, a.phone, a
       <?php while ($row = $result->fetch_assoc()): ?>
         <tr>
           <td><?= $row['id'] ?></td>
-          <td><?= $row['user_name'] ?></td>
+          <td><?= $row['total_amount'] ?></td>
           <td>
             Họ tên: <strong><?= $row['full_name'] ?></strong><br>
             Số điện thoại: <?= $row['phone'] ?><br>
