@@ -10,20 +10,52 @@ if (!isset($_SESSION['user'])) {
   header("Location: /cuahangtaphoa/auth/login.php");
   exit;
 }
+$filter = $_GET['filter'] ?? 'all'; // Mặc định: all
 
+$statuses = [
+  'all' => 'Tất cả',
+  'chưa thanh toán' => 'Chưa thanh toán',
+  'chuẩn bị lấy hàng' => 'Chuẩn bị lấy hàng',
+  'đang giao' => 'Đang giao',
+  'đã giao' => 'Đã giao',
+  'chưa hoàn tiền' => 'Chưa hoàn tiền',
+  'đã huỷ' => 'Đã huỷ',
+  'đã hoàn tiền' => 'Đã hoàn tiền'
+];
 $user_id = $_SESSION['user']['id'];
-$stmt = $conn->prepare("SELECT o.*,  a.full_name, a.phone, a.address 
-                        FROM orders o 
-                        JOIN addresses a ON o.address_id = a.id 
-                        WHERE o.user_id = ? 
-                        ORDER BY o.order_date DESC");
-$stmt->bind_param("s", $user_id);
+if ($filter !== 'all') {
+  $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
+                          FROM orders o 
+                          JOIN addresses a ON o.address_id = a.id
+                          WHERE o.user_id = ? AND o.order_status = ?
+                          ORDER BY o.order_date DESC");
+  $stmt->bind_param("ss", $user_id, $filter);
+} else {
+  $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
+                          FROM orders o 
+                          JOIN addresses a ON o.address_id = a.id
+                          WHERE o.user_id = ?
+                          ORDER BY o.order_date DESC");
+  $stmt->bind_param("s", $user_id);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
 
 <div class="container py-4">
   <h2>Đơn hàng của tôi</h2>
+  <ul class="nav nav-tabs mb-3">
+    <?php foreach ($statuses as $key => $label): ?>
+      <li class="nav-item">
+        <a class="nav-link <?= ($key === $filter) ? 'active' : '' ?>"
+          href="?filter=<?= urlencode($key) ?>">
+          <?= $label ?>
+        </a>
+      </li>
+    <?php endforeach; ?>
+  </ul>
+
   <table class="table table-bordered table-striped align-middle">
     <thead class="table-light">
       <tr>
