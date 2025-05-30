@@ -15,6 +15,7 @@ $sort_by = $_GET['sort_by'] ?? 'order_date'; // Mặc định: theo ngày
 $sort_dir = strtoupper($_GET['sort_dir'] ?? 'DESC'); // Mặc định: giảm dần
 $allowed_sort_by = ['order_date', 'total_amount', 'full_name'];
 $allowed_sort_dir = ['ASC', 'DESC'];
+$search_date = $_GET['search_date'] ?? '';
 
 // Ràng buộc an toàn
 if (!in_array($sort_by, $allowed_sort_by)) $sort_by = 'order_date';
@@ -32,20 +33,41 @@ $statuses = [
 ];
 $user_id = $_SESSION['user']['id'];
 if ($filter !== 'all') {
-  $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
-                          FROM orders o 
-                          JOIN addresses a ON o.address_id = a.id
-                          WHERE o.user_id = ? AND o.order_status = ?
-                          ORDER BY $sort_by $sort_dir");
-  $stmt->bind_param("ss", $user_id, $filter);
+  if (!empty($search_date)) {
+    $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
+                            FROM orders o 
+                            JOIN addresses a ON o.address_id = a.id
+                            WHERE o.user_id = ? AND o.order_status = ? 
+                                  AND o.order_date LIKE CONCAT(?, '%')
+                            ORDER BY $sort_by $sort_dir");
+    $stmt->bind_param("sss", $user_id, $filter, $search_date);
+  } else {
+    $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
+                            FROM orders o 
+                            JOIN addresses a ON o.address_id = a.id
+                            WHERE o.user_id = ? AND o.order_status = ?
+                            ORDER BY $sort_by $sort_dir");
+    $stmt->bind_param("ss", $user_id, $filter);
+  }
 } else {
-  $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
-                          FROM orders o 
-                          JOIN addresses a ON o.address_id = a.id
-                          WHERE o.user_id = ?
-                          ORDER BY $sort_by $sort_dir");
-  $stmt->bind_param("s", $user_id);
+  if (!empty($search_date)) {
+    $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
+                            FROM orders o 
+                            JOIN addresses a ON o.address_id = a.id
+                            WHERE o.user_id = ? 
+                                  AND o.order_date LIKE CONCAT(?, '%')
+                            ORDER BY $sort_by $sort_dir");
+    $stmt->bind_param("ss", $user_id, $search_date);
+  } else {
+    $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
+                            FROM orders o 
+                            JOIN addresses a ON o.address_id = a.id
+                            WHERE o.user_id = ?
+                            ORDER BY $sort_by $sort_dir");
+    $stmt->bind_param("s", $user_id);
+  }
 }
+
 
 $stmt->execute();
 $result = $stmt->get_result();
@@ -63,30 +85,46 @@ $result = $stmt->get_result();
       </li>
     <?php endforeach; ?>
   </ul>
-  <form method="GET" class="row g-2 mb-3">
+  <form method="GET" class="row g-2 mb-3 justify-content-between align-items-end">
+
+    <!-- Khối bên trái: Sort -->
+    <div class="col-md-6 d-flex flex-wrap gap-2 align-items-end">
+      <div>
+        <label class="form-label">Sắp xếp theo:</label>
+        <select class="form-select" name="sort_by">
+          <option value="order_date" <?= $sort_by == 'order_date' ? 'selected' : '' ?>>Ngày đặt</option>
+          <option value="total_amount" <?= $sort_by == 'total_amount' ? 'selected' : '' ?>>Tổng tiền</option>
+          <option value="full_name" <?= $sort_by == 'full_name' ? 'selected' : '' ?>>Tên người nhận</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label">Thứ tự:</label>
+        <select class="form-select" name="sort_dir">
+          <option value="ASC" <?= $sort_dir == 'ASC' ? 'selected' : '' ?>>Tăng dần</option>
+          <option value="DESC" <?= $sort_dir == 'DESC' ? 'selected' : '' ?>>Giảm dần</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Khối bên phải: Tìm ngày -->
+    <div class="col-md-6 d-flex justify-content-end align-items-end">
+      <div class="w-100" style="max-width: 300px;">
+        <label class="form-label">Tìm ngày:</label>
+        <input type="text" class="form-control" name="search_date"
+          value="<?= htmlspecialchars($_GET['search_date'] ?? '') ?>"
+          placeholder="yyyy hoặc yyyy-mm hoặc yyyy-mm-dd">
+
+      </div>
+      <div class="ms-2">
+        <button class="btn btn-primary mt-4" type="submit">Áp dụng</button>
+      </div>
+    </div>
+
+    <!-- Hidden giữ filter cũ -->
     <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
-
-    <div class="col-auto">
-      <label class="form-label">Sắp xếp theo:</label>
-      <select class="form-select" name="sort_by">
-        <option value="order_date" <?= $sort_by == 'order_date' ? 'selected' : '' ?>>Ngày đặt</option>
-        <option value="total_amount" <?= $sort_by == 'total_amount' ? 'selected' : '' ?>>Tổng tiền</option>
-        <option value="full_name" <?= $sort_by == 'full_name' ? 'selected' : '' ?>>Tên người nhận</option>
-      </select>
-    </div>
-
-    <div class="col-auto">
-      <label class="form-label">Thứ tự:</label>
-      <select class="form-select" name="sort_dir">
-        <option value="ASC" <?= $sort_dir == 'ASC' ? 'selected' : '' ?>>Tăng dần</option>
-        <option value="DESC" <?= $sort_dir == 'DESC' ? 'selected' : '' ?>>Giảm dần</option>
-      </select>
-    </div>
-
-    <div class="col-auto d-flex align-items-end">
-      <button class="btn btn-primary" type="submit">Áp dụng</button>
-    </div>
   </form>
+
 
   <table class="table table-bordered table-striped align-middle">
     <thead class="table-light">
