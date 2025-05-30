@@ -42,6 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   <div class="mb-3">
     <label class="form-label">Email</label>
     <input name="email" type="email" class="form-control" required>
+    <small id="emailHelp" class="text-danger d-none">Email này đã được sử dụng!</small>
+
   </div>
   <div class="mb-3">
     <label class="form-label">Mật khẩu</label>
@@ -51,3 +53,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </form>
 
 <?php include_once __DIR__ . '/../layout/footer.php';  ?>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const emailInput = document.querySelector('input[name="email"]');
+    const emailHelp = document.getElementById('emailHelp');
+
+    emailInput.addEventListener('blur', function() {
+      const email = emailInput.value.trim();
+      if (!email) return;
+
+      fetch('/cuahangtaphoa/api/check_email.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: 'email=' + encodeURIComponent(email)
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.exists) {
+            emailHelp.classList.remove('d-none');
+          } else {
+            emailHelp.classList.add('d-none');
+          }
+        });
+    });
+  });
+</script>

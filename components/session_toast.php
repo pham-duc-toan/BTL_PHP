@@ -17,6 +17,7 @@ foreach ($toastTypes as $type):
       <div class="toast align-items-center <?= $class ?> border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
           <div class="toast-body">
+            <!-- xóa ngay session type khi vừa in ra giao diện  -->
             <?= $_SESSION[$type];
             unset($_SESSION[$type]); ?>
           </div>
