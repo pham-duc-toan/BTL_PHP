@@ -11,6 +11,14 @@ if (!isset($_SESSION['user'])) {
   exit;
 }
 $filter = $_GET['filter'] ?? 'all'; // Mặc định: all
+$sort_by = $_GET['sort_by'] ?? 'order_date'; // Mặc định: theo ngày
+$sort_dir = strtoupper($_GET['sort_dir'] ?? 'DESC'); // Mặc định: giảm dần
+$allowed_sort_by = ['order_date', 'total_amount', 'full_name'];
+$allowed_sort_dir = ['ASC', 'DESC'];
+
+// Ràng buộc an toàn
+if (!in_array($sort_by, $allowed_sort_by)) $sort_by = 'order_date';
+if (!in_array($sort_dir, $allowed_sort_dir)) $sort_dir = 'DESC';
 
 $statuses = [
   'all' => 'Tất cả',
@@ -28,14 +36,14 @@ if ($filter !== 'all') {
                           FROM orders o 
                           JOIN addresses a ON o.address_id = a.id
                           WHERE o.user_id = ? AND o.order_status = ?
-                          ORDER BY o.order_date DESC");
+                          ORDER BY $sort_by $sort_dir");
   $stmt->bind_param("ss", $user_id, $filter);
 } else {
   $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
                           FROM orders o 
                           JOIN addresses a ON o.address_id = a.id
                           WHERE o.user_id = ?
-                          ORDER BY o.order_date DESC");
+                          ORDER BY $sort_by $sort_dir");
   $stmt->bind_param("s", $user_id);
 }
 
@@ -55,6 +63,30 @@ $result = $stmt->get_result();
       </li>
     <?php endforeach; ?>
   </ul>
+  <form method="GET" class="row g-2 mb-3">
+    <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+
+    <div class="col-auto">
+      <label class="form-label">Sắp xếp theo:</label>
+      <select class="form-select" name="sort_by">
+        <option value="order_date" <?= $sort_by == 'order_date' ? 'selected' : '' ?>>Ngày đặt</option>
+        <option value="total_amount" <?= $sort_by == 'total_amount' ? 'selected' : '' ?>>Tổng tiền</option>
+        <option value="full_name" <?= $sort_by == 'full_name' ? 'selected' : '' ?>>Tên người nhận</option>
+      </select>
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label">Thứ tự:</label>
+      <select class="form-select" name="sort_dir">
+        <option value="ASC" <?= $sort_dir == 'ASC' ? 'selected' : '' ?>>Tăng dần</option>
+        <option value="DESC" <?= $sort_dir == 'DESC' ? 'selected' : '' ?>>Giảm dần</option>
+      </select>
+    </div>
+
+    <div class="col-auto d-flex align-items-end">
+      <button class="btn btn-primary" type="submit">Áp dụng</button>
+    </div>
+  </form>
 
   <table class="table table-bordered table-striped align-middle">
     <thead class="table-light">
