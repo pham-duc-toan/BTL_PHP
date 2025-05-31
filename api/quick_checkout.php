@@ -25,30 +25,41 @@ if (!$product_id || !$price || !$quantity || !$size || !$address_id || !$payment
 
 // Tính tổng tiền
 $total = $price * $quantity;
+// Xác định trạng thái đơn theo phương thức thanh toán
+if ($payment_method === 'bank_transfer') {
+  $order_status = 'chưa thanh toán';
+} else {
+  $order_status = 'chuẩn bị lấy hàng';
+}
 
 // Bắt đầu giao dịch
 $conn->begin_transaction();
 try {
-  $order_id = generateId();
-  $stmt = $conn->prepare("INSERT INTO orders (id,user_id, address_id, payment_method, total_amount, order_status) VALUES (?,?, ?, ?, ?, 'chuẩn bị lấy hàng')");
-  $stmt->bind_param("ssssd", $order_id, $user_id, $address_id, $payment_method, $total); // Sửa 'iisd' thành 'issd'
+  // Bắt đầu transaction
+  $conn->begin_transaction();
 
-
+  // Tạo đơn hàng
+  $order_id = generateId();  // Tạo ID cho đơn
+  $stmt = $conn->prepare("INSERT INTO orders (id, user_id, address_id, payment_method, total_amount, order_status)
+                        VALUES (?, ?, ?, ?, ?, ?)");
+  $stmt->bind_param("ssssds", $order_id, $user_id, $address_id, $payment_method, $total, $order_status);
 
   $stmt->execute();
   if ($stmt->affected_rows === 0) {
     throw new Exception("Tạo đơn hàng thất bại.");
   }
 
-
-  // Thêm chi tiết đơn hàng
-  $stmt2 = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, size, price) VALUES (?, ?, ?, ?, ?)");
-  $stmt2->bind_param("ssisd", $order_id, $product_id, $quantity, $size, $price);
+  // Thêm chi tiết đơn hàng (chỉ 1 sản phẩm)
+  $order_item_id = generateId(); // ID riêng cho order_items
+  $stmt2 = $conn->prepare("INSERT INTO order_items (id, order_id, product_id, quantity, size, price)
+                           VALUES (?, ?, ?, ?, ?, ?)");
+  $stmt2->bind_param("sssisd", $order_item_id, $order_id, $product_id, $quantity, $size, $price);
   $stmt2->execute();
   if ($stmt2->affected_rows === 0) {
     throw new Exception("Thêm chi tiết đơn hàng thất bại.");
   }
 
+  // Thành công
   $conn->commit();
   echo json_encode(['success' => true]);
 } catch (Exception $e) {
