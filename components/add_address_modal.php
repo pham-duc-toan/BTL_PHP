@@ -62,7 +62,7 @@
       document.getElementById('lat').value = lat;
       document.getElementById('lng').value = lng;
 
-      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=vi`)
         .then(res => res.json())
         .then(data => {
           document.getElementById('address').value = data.display_name || 'Không tìm được địa chỉ';
