@@ -24,86 +24,7 @@ $current_path = $_SERVER['PHP_SELF'];
   <!-- CSS -->
   <link rel="stylesheet" href="/cuahangtaphoa/assets/style.css">
 
-  <style>
-    body,
-    html {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      font-family: 'Be Vietnam Pro', sans-serif;
-      background-color: #f8f9fa;
-    }
 
-    /* Navbar */
-    .navbar-brand {
-      font-weight: 600;
-      font-size: 1.5rem;
-      color: #28a745 !important;
-    }
-
-    .navbar-nav .nav-link {
-      font-weight: 500;
-    }
-
-    /* Tắt nút xoá mặc định trong input[type=search] */
-    input[type="search"]::-webkit-search-decoration,
-    input[type="search"]::-webkit-search-cancel-button {
-      -webkit-appearance: none;
-      appearance: none;
-      display: none;
-    }
-
-    /* Layout cha chứa sidebar và main */
-    .main-layout {
-      display: flex;
-      height: calc(100vh - 60px);
-      /* 60px là chiều cao navbar */
-      overflow: hidden;
-    }
-
-    /* Sidebar bên trái */
-    .sidebar {
-      width: 300px;
-      background-color: #f8f9fa;
-      padding: 1rem;
-      border-right: 1px solid #dee2e6;
-      overflow-y: auto;
-    }
-
-    .sidebar .nav {
-      margin-top: 1rem;
-    }
-
-    .sidebar .nav-link {
-      font-weight: 500;
-      color: #333;
-      padding-top: 0.6rem;
-      padding-bottom: 0.6rem;
-      margin-top: 0.2rem;
-      margin-bottom: 0.2rem;
-      transition: background-color 0.2s;
-    }
-
-    .sidebar .nav-link:hover,
-    .sidebar .nav-link.active {
-      background-color: #e2f0d9;
-      border-radius: 8px;
-      color: #198754;
-    }
-
-    /* Nội dung chính bên phải */
-    .main-content {
-      flex-grow: 1;
-      overflow-y: auto;
-      padding: 1.5rem;
-    }
-
-    .sidebar-divider {
-      border: none;
-      border-top: 1px solid #6c757d;
-      margin: 1.2rem 0;
-    }
-  </style>
 </head>
 
 <body>
@@ -161,7 +82,8 @@ $current_path = $_SERVER['PHP_SELF'];
 
 
 
-  <div class="main-layout <?= $role === 'user' ? 'container' : '' ?>">
+  <div class="main-layout <?= $role === 'user' ? 'container' : 'admin-layout' ?>">
+
 
     <?php if ($role === 'admin'): ?>
       <div class="sidebar">
