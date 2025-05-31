@@ -29,7 +29,6 @@ $current_path = $_SERVER['PHP_SELF'];
 
 <body>
   <?php include_once __DIR__ . '/../components/session_toast.php'; ?>
-
   <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
     <div class="container">
       <a class="navbar-brand" href="/cuahangtaphoa/<?= $role === 'admin' ? 'admin_dashboard.php' : 'index.php' ?>">
@@ -79,12 +78,7 @@ $current_path = $_SERVER['PHP_SELF'];
       </div>
     </div>
   </nav>
-
-
-
   <div class="main-layout <?= $role === 'user' ? 'container' : 'admin-layout' ?>">
-
-
     <?php if ($role === 'admin'): ?>
       <div class="sidebar">
         <nav class="nav flex-column mt-4">
@@ -108,18 +102,15 @@ $current_path = $_SERVER['PHP_SELF'];
             <i class="bi bi-bar-chart-line me-2"></i>Thống kê
           </a>
           <hr class="sidebar-divider">
-          <a class="nav-link <?= str_ends_with($current_path, '/cuahangtaphoa/index.php') ? 'active' : '' ?>" href="/cuahangtaphoa/index.php">
+          <a class="nav-link <?= str_ends_with($current_path, '/cuahangtaphoa/permission.php') ? 'active' : '' ?>" href="/cuahangtaphoa/permission.php">
             <i class="bi bi-shield-lock me-2"></i>
             Phân quyền
           </a>
-          <a class="nav-link <?= str_ends_with($current_path, 'admin/categories.php') ? 'active' : '' ?>" href="/cuahangtaphoa/admin/categories.php">
+          <a class="nav-link <?= str_ends_with($current_path, 'admin/setting.php') ? 'active' : '' ?>" href="/cuahangtaphoa/admin/setting.php">
             <i class="bi bi-gear me-2"></i>Cài đặt
           </a>
 
         </nav>
       </div>
     <?php endif; ?>
-
-
-
     <div class="main-content">

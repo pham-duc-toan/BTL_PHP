@@ -32,9 +32,9 @@ $extraData = ""; // bắt buộc phải có
 
 // MoMo (sandbox) config
 $endpoint = "https://test-payment.momo.vn/v2/gateway/api/create";
-$accessKey  = "klm05TvNBzhg7h7j";
-$secretKey  = "at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa";
-$partnerCode = "MOMOBKUN20180529";
+$accessKey  = "F8BBA842ECF85";
+$secretKey  = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
+$partnerCode = "MOMO";
 
 // Tạo orderId duy nhất cho MoMo
 $timestamp = time();
@@ -42,8 +42,8 @@ $mo_order_id = $order_id . "_" . $timestamp;
 $requestId = $mo_order_id;
 $orderInfo = "Thanh toán đơn hàng $order_id";
 
-$redirectUrl = "https://4772-42-116-243-148.ngrok-free.app/cuahangtaphoa/momo_return.php";
-$ipnUrl = "https://4772-42-116-243-148.ngrok-free.app/cuahangtaphoa/momo_return.php";
+$redirectUrl = "https://3abf-42-117-78-235.ngrok-free.app/cuahangtaphoa/momo_return.php";
+$ipnUrl = "https://3abf-42-117-78-235.ngrok-free.app/cuahangtaphoa/momo_return.php";
 $requestType = "captureWallet";
 
 // Tạo chữ ký

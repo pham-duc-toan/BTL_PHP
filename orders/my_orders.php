@@ -160,7 +160,7 @@ $result = $stmt->get_result();
         <?php while ($row = $result->fetch_assoc()): ?>
           <tr>
             <td><?= $row['id'] ?></td>
-            <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
+            <td><?= date('d/m/Y', strtotime($row['order_date'])) ?></td>
             <td>
               Họ tên: <strong><?= $row['full_name'] ?></strong><br>
               Số điện thoại: <?= $row['phone'] ?><br>
@@ -170,14 +170,9 @@ $result = $stmt->get_result();
             <td><?= $row['payment_method'] === 'cod' ? 'Thanh toán khi nhận' : 'Chuyển khoản' ?></td>
             <td><?= ucfirst($row['order_status']) ?></td>
             <td>
-              <!-- Nút xem chi tiết -->
-              <!-- Nút xem chi tiết -->
               <button class="btn btn-sm btn-info mb-1 view-details" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#orderDetailModal">
                 Xem chi tiết
               </button>
-
-
-
               <?php if ($row['order_status'] === 'chưa thanh toán'): ?>
                 <form method="POST" action="/cuahangtaphoa/momo_payment.php" class="d-inline">
                   <input type="hidden" name="order_id" value="<?= $row['id'] ?>">
@@ -189,13 +184,22 @@ $result = $stmt->get_result();
                   Thay đổi địa chỉ
                 </button>
               <?php elseif (in_array($row['order_status'], ['chuẩn bị lấy hàng', 'đang giao'])): ?>
+
                 <?php if ($row['payment_method'] === 'bank_transfer'): ?>
                   <button type="button"
                     class="btn btn-sm btn-danger mb-1 btn-cancel-order"
                     data-order-id="<?= $row['id'] ?>">
                     Yêu cầu huỷ
                   </button>
+                <?php elseif ($row['payment_method'] === 'cod'): ?>
+                  <form method="POST" action="/cuahangtaphoa/api/huy_don_cod.php" class="d-inline">
+                    <input type="hidden" name="order_id" value="<?= $row['id'] ?>">
+                    <button type="submit" class="btn btn-sm btn-outline-danger mb-1">
+                      Huỷ đơn (COD)
+                    </button>
+                  </form>
                 <?php endif; ?>
+
                 <?php if ($row['order_status'] === 'chuẩn bị lấy hàng'): ?>
                   <button type="button"
                     class="btn btn-sm btn-secondary mb-1 btn-edit-address"
@@ -203,9 +207,9 @@ $result = $stmt->get_result();
                     Thay đổi địa chỉ
                   </button>
                 <?php endif; ?>
-              <?php elseif ($row['order_status'] === 'yêu cầu huỷ'): ?>
-                <span class="text-muted">Đã yêu cầu huỷ</span>
+
               <?php endif; ?>
+
             </td>
           </tr>
 

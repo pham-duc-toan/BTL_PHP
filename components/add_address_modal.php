@@ -6,7 +6,7 @@
     <div class="modal-content">
       <form id="addAddressForm">
         <div class="modal-header">
-          <h5 class="modal-title">📍 Thêm địa chỉ giao hàng</h5>
+          <h5 class="modal-title"> Thêm địa chỉ giao hàng</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
         </div>
         <div class="modal-body">

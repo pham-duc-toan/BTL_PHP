@@ -132,7 +132,7 @@ $result = $conn->query($sql);
             Địa chỉ: <span class="text-muted"><?= $row['address'] ?></span>
           </td>
 
-          <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
+          <td><?= date('d/m/Y', strtotime($row['order_date'])) ?></td>
           <td><?= $row['payment_method'] === 'cod' ? 'COD' : 'Chuyển khoản' ?></td>
           <td><?= $row['order_status'] ?></td>
           <td>
