@@ -37,6 +37,13 @@ $role = $user['role'] ?? null;
     .main {
       min-height: calc(100vh - 256px);
     }
+
+    input[type="search"]::-webkit-search-decoration,
+    input[type="search"]::-webkit-search-cancel-button {
+      -webkit-appearance: none;
+      appearance: none;
+      display: none;
+    }
   </style>
 </head>
 
@@ -48,6 +55,11 @@ $role = $user['role'] ?? null;
       <a class="navbar-brand" href="/cuahangtaphoa/<?= $role === 'admin' ? 'admin_dashboard.php' : 'index.php' ?>">
         🛍️ GoShopOnline
       </a>
+
+      <?php if ($user && $role === 'user'): ?>
+        <?php include_once __DIR__ . '/../components/search_bar.php'; ?>
+      <?php endif; ?>
+
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -87,6 +99,7 @@ $role = $user['role'] ?? null;
       </div>
     </div>
   </nav>
+
 
 
   <div class="container py-4 main">

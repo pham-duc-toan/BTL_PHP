@@ -22,7 +22,7 @@ if ($user && $role !== 'admin') {
 ?>
 
 <!-- Giỏ hàng Shopee-style -->
-<li id="header_cart" class="nav-item position-relative mx-2 me-5">
+<li id="header_cart" class="nav-item position-relative mx-2 me-4">
   <a class="nav-link position-relative" href="/cuahangtaphoa/cart/cart.php">
     <i class="bi bi-cart" style="font-size: 1.5rem;"></i>
 
