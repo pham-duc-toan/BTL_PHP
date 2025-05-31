@@ -1,6 +1,6 @@
 <?php
 include_once __DIR__ . '/../helper/db.php';
-include_once __DIR__ . '/../layout/header.php';
+include_once __DIR__ . '/../layout/headerAuth.php';
 include_once __DIR__ . '/../helper/functions.php';
 
 if (session_status() == PHP_SESSION_NONE) session_start();
@@ -67,4 +67,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   <button class="btn btn-success">Đăng nhập</button>
 </form>
 
-<?php include_once __DIR__ . '/../layout/footer.php'; ?>
+<?php include_once __DIR__ . '/../layout/footerAuth.php'; ?>

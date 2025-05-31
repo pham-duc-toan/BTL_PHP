@@ -1,6 +1,6 @@
 <?php
 include_once __DIR__ . '/../helper/db.php';
-include_once __DIR__ . '/../layout/header.php';
+include_once __DIR__ . '/../layout/headerAuth.php';
 include_once __DIR__ . '/../helper/functions.php';
 
 
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   <button class="btn btn-primary">Đăng ký</button>
 </form>
 
-<?php include_once __DIR__ . '/../layout/footer.php';  ?>
+<?php include_once __DIR__ . '/../layout/footerAuth.php';  ?>
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     const emailInput = document.querySelector('input[name="email"]');
