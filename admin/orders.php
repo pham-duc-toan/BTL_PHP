@@ -13,36 +13,41 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
 
 $status_filter = $_GET['filter'] ?? 'all';
 $sort_by = $_GET['sort_by'] ?? 'order_date';
-$sort_dir = $_GET['sort_dir'] ?? 'DESC';
-$search_date = $_GET['search_date'] ?? '';
+$sort_dir = strtoupper($_GET['sort_dir'] ?? 'DESC');
+$search_from = $_GET['search_from'] ?? '';
+$search_to = $_GET['search_to'] ?? '';
 
-// Build query
+// Xác định danh sách cột sắp xếp hợp lệ
+$allowed_sort = ['order_date', 'total_amount', 'full_name'];
+$allowed_dir = ['ASC', 'DESC'];
+if (!in_array($sort_by, $allowed_sort)) $sort_by = 'order_date';
+if (!in_array($sort_dir, $allowed_dir)) $sort_dir = 'DESC';
+
+// Xây dựng câu truy vấn
 $sql = "SELECT o.*, u.name AS user_name, a.full_name, a.phone, a.address 
         FROM orders o 
         JOIN users u ON o.user_id = u.id 
         JOIN addresses a ON o.address_id = a.id 
         WHERE 1=1";
 
-// Filter theo trạng thái
+// Lọc theo trạng thái
 if ($status_filter !== 'all') {
   $sql .= " AND o.order_status = '" . $conn->real_escape_string($status_filter) . "'";
 }
 
-// Tìm kiếm theo ngày
-if (!empty($search_date)) {
-  $sql .= " AND DATE_FORMAT(o.order_date, '%Y-%m-%d') LIKE '" . $conn->real_escape_string($search_date) . "%'";
+// Lọc theo ngày
+if (!empty($search_from)) {
+  $sql .= " AND DATE(o.order_date) >= '" . $conn->real_escape_string($search_from) . "'";
+}
+if (!empty($search_to)) {
+  $sql .= " AND DATE(o.order_date) <= '" . $conn->real_escape_string($search_to) . "'";
 }
 
 // Sắp xếp
-$allowed_sort = ['order_date', 'total_amount', 'full_name'];
-$allowed_dir = ['ASC', 'DESC'];
-if (!in_array($sort_by, $allowed_sort)) $sort_by = 'order_date';
-if (!in_array($sort_dir, $allowed_dir)) $sort_dir = 'DESC';
-
 $sql .= " ORDER BY $sort_by $sort_dir";
 
+// Thực thi truy vấn
 $result = $conn->query($sql);
-
 ?>
 <div class="container py-4">
   <h2>Quản lý đơn hàng</h2>
@@ -85,11 +90,15 @@ $result = $conn->query($sql);
     </div>
 
     <div class="col-md-6 d-flex justify-content-end align-items-end">
-      <div class="w-100" style="max-width: 300px;">
-        <label class="form-label">Tìm theo ngày:</label>
-        <input type="text" class="form-control" name="search_date"
-          value="<?= htmlspecialchars($search_date) ?>"
-          placeholder="yyyy hoặc yyyy-mm hoặc yyyy-mm-dd">
+      <div class="col">
+        <label class="form-label">Từ ngày:</label>
+        <input type="date" class="form-control" name="search_from"
+          value="<?= htmlspecialchars($search_from) ?>">
+      </div>
+      <div class="col">
+        <label class="form-label">Đến ngày:</label>
+        <input type="date" class="form-control" name="search_to"
+          value="<?= htmlspecialchars($search_to) ?>">
       </div>
       <div class="ms-2">
         <button class="btn btn-primary mt-4" type="submit">Áp dụng</button>
