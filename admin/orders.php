@@ -53,13 +53,14 @@ $result = $conn->query($sql);
   <h2>Quản lý đơn hàng</h2>
 
   <!-- Tabs trạng thái -->
+
   <ul class="nav nav-tabs mb-3">
     <?php
     $tabs = ['all' => 'Tất cả', 'chưa thanh toán' => 'Chưa thanh toán', 'chuẩn bị lấy hàng' => 'Chuẩn bị lấy hàng', 'đang giao' => 'Đang giao', 'đã giao' => 'Đã giao', 'đã huỷ' => 'Đã huỷ', 'chưa hoàn tiền' => 'Chưa hoàn tiền', 'đã hoàn tiền' => 'Đã hoàn tiền'];
     foreach ($tabs as $key => $label): ?>
       <li class="nav-item">
         <a class="nav-link <?= $status_filter == $key ? 'active' : '' ?>"
-          href="?filter=<?= $key ?>&sort_by=<?= $sort_by ?>&sort_dir=<?= $sort_dir ?>&search_date=<?= $search_date ?>">
+          href="?filter=<?= urlencode($key) ?>&sort_by=<?= $sort_by ?>&sort_dir=<?= $sort_dir ?>&search_from=<?= $search_from ?>&search_to=<?= $search_to ?>">
           <?= $label ?>
         </a>
       </li>
