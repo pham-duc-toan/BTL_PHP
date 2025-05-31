@@ -10,14 +10,17 @@ if (!isset($_SESSION['user'])) {
   header("Location: /cuahangtaphoa/auth/login.php");
   exit;
 }
-$filter = $_GET['filter'] ?? 'all'; // Mặc định: all
-$sort_by = $_GET['sort_by'] ?? 'order_date'; // Mặc định: theo ngày
-$sort_dir = strtoupper($_GET['sort_dir'] ?? 'DESC'); // Mặc định: giảm dần
+
+$filter = $_GET['filter'] ?? 'all';
+$sort_by = $_GET['sort_by'] ?? 'order_date';
+$sort_dir = strtoupper($_GET['sort_dir'] ?? 'DESC');
+
 $allowed_sort_by = ['order_date', 'total_amount', 'full_name'];
 $allowed_sort_dir = ['ASC', 'DESC'];
-$search_date = $_GET['search_date'] ?? '';
 
-// Ràng buộc an toàn
+$search_from = $_GET['search_from'] ?? '';
+$search_to = $_GET['search_to'] ?? '';
+
 if (!in_array($sort_by, $allowed_sort_by)) $sort_by = 'order_date';
 if (!in_array($sort_dir, $allowed_sort_dir)) $sort_dir = 'DESC';
 
@@ -31,47 +34,47 @@ $statuses = [
   'đã huỷ' => 'Đã huỷ',
   'đã hoàn tiền' => 'Đã hoàn tiền'
 ];
+
 $user_id = $_SESSION['user']['id'];
+
+// Chuẩn bị truy vấn
+$sql = "SELECT o.*, a.full_name, a.phone, a.address
+        FROM orders o 
+        JOIN addresses a ON o.address_id = a.id
+        WHERE o.user_id = ?";
+$params = [$user_id];
+$types = "s";
+
+// Thêm điều kiện lọc trạng thái
 if ($filter !== 'all') {
-  if (!empty($search_date)) {
-    $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
-                            FROM orders o 
-                            JOIN addresses a ON o.address_id = a.id
-                            WHERE o.user_id = ? AND o.order_status = ? 
-                                  AND o.order_date LIKE CONCAT(?, '%')
-                            ORDER BY $sort_by $sort_dir");
-    $stmt->bind_param("sss", $user_id, $filter, $search_date);
-  } else {
-    $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
-                            FROM orders o 
-                            JOIN addresses a ON o.address_id = a.id
-                            WHERE o.user_id = ? AND o.order_status = ?
-                            ORDER BY $sort_by $sort_dir");
-    $stmt->bind_param("ss", $user_id, $filter);
-  }
-} else {
-  if (!empty($search_date)) {
-    $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
-                            FROM orders o 
-                            JOIN addresses a ON o.address_id = a.id
-                            WHERE o.user_id = ? 
-                                  AND o.order_date LIKE CONCAT(?, '%')
-                            ORDER BY $sort_by $sort_dir");
-    $stmt->bind_param("ss", $user_id, $search_date);
-  } else {
-    $stmt = $conn->prepare("SELECT o.*, a.full_name, a.phone, a.address
-                            FROM orders o 
-                            JOIN addresses a ON o.address_id = a.id
-                            WHERE o.user_id = ?
-                            ORDER BY $sort_by $sort_dir");
-    $stmt->bind_param("s", $user_id);
-  }
+  $sql .= " AND o.order_status = ?";
+  $params[] = $filter;
+  $types .= "s";
 }
 
+// Lọc từ ngày
+if (!empty($search_from)) {
+  $sql .= " AND DATE(o.order_date) >= ?";
+  $params[] = $search_from;
+  $types .= "s";
+}
 
+// Lọc đến ngày
+if (!empty($search_to)) {
+  $sql .= " AND DATE(o.order_date) <= ?";
+  $params[] = $search_to;
+  $types .= "s";
+}
+
+$sql .= " ORDER BY $sort_by $sort_dir";
+
+// Chuẩn bị và bind
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
+
 
 <div class="container py-4">
   <h2>Đơn hàng của tôi</h2>
@@ -108,100 +111,110 @@ $result = $stmt->get_result();
     </div>
 
     <!-- Khối bên phải: Tìm ngày -->
-    <div class="col-md-6 d-flex justify-content-end align-items-end">
-      <div class="w-100" style="max-width: 300px;">
-        <label class="form-label">Tìm ngày:</label>
-        <input type="text" class="form-control" name="search_date"
-          value="<?= htmlspecialchars($_GET['search_date'] ?? '') ?>"
-          placeholder="yyyy hoặc yyyy-mm hoặc yyyy-mm-dd">
-
-      </div>
-      <div class="ms-2">
-        <button class="btn btn-primary mt-4" type="submit">Áp dụng</button>
+    <div class="col-md-6">
+      <div class="row g-2 align-items-end">
+        <div class="col">
+          <label class="form-label">Từ ngày:</label>
+          <input type="date" class="form-control" name="search_from"
+            value="<?= htmlspecialchars($_GET['search_from'] ?? '') ?>">
+        </div>
+        <div class="col">
+          <label class="form-label">Đến ngày:</label>
+          <input type="date" class="form-control" name="search_to"
+            value="<?= htmlspecialchars($_GET['search_to'] ?? '') ?>">
+        </div>
       </div>
     </div>
 
-    <!-- Hidden giữ filter cũ -->
-    <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
-  </form>
 
 
-  <table class="table table-bordered table-striped align-middle">
-    <thead class="table-light">
+
+    <div class="ms-2">
+      <button class="btn btn-primary mt-4" type="submit">Áp dụng</button>
+    </div>
+</div>
+
+<!-- Hidden giữ filter cũ -->
+<input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+</form>
+
+
+<table class="table table-bordered table-striped align-middle">
+  <thead class="table-light">
+    <tr>
+      <th>Mã đơn</th>
+      <th>Ngày đặt</th>
+      <th>Thông tin đặt hàng</th>
+      <th>Tổng tiền</th>
+      <th>Phương thức</th>
+      <th>Trạng thái</th>
+      <th width="200">Hành động</th>
+    </tr>
+  </thead>
+  <tbody>
+    <?php if ($result->num_rows === 0): ?>
       <tr>
-        <th>Mã đơn</th>
-        <th>Ngày đặt</th>
-        <th>Thông tin đặt hàng</th>
-        <th>Tổng tiền</th>
-        <th>Phương thức</th>
-        <th>Trạng thái</th>
-        <th width="200">Hành động</th>
+        <td colspan="7" class="text-center text-muted">Không có đơn hàng nào.</td>
       </tr>
-    </thead>
-    <tbody>
-      <?php if ($result->num_rows === 0): ?>
+    <?php else: ?>
+      <?php while ($row = $result->fetch_assoc()): ?>
         <tr>
-          <td colspan="7" class="text-center text-muted">Không có đơn hàng nào.</td>
-        </tr>
-      <?php else: ?>
-        <?php while ($row = $result->fetch_assoc()): ?>
-          <tr>
-            <td><?= $row['id'] ?></td>
-            <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
-            <td>
-              Họ tên: <strong><?= $row['full_name'] ?></strong><br>
-              Số điện thoại: <?= $row['phone'] ?><br>
-              Địa chỉ: <span class="text-muted"><?= $row['address'] ?></span>
-            </td>
-            <td><?= number_format($row['total_amount'], 0, ',', '.') ?> đ</td>
-            <td><?= $row['payment_method'] === 'cod' ? 'Thanh toán khi nhận' : 'Chuyển khoản' ?></td>
-            <td><?= ucfirst($row['order_status']) ?></td>
-            <td>
-              <!-- Nút xem chi tiết -->
-              <!-- Nút xem chi tiết -->
-              <button class="btn btn-sm btn-info mb-1 view-details" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#orderDetailModal">
-                Xem chi tiết
+          <td><?= $row['id'] ?></td>
+          <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
+          <td>
+            Họ tên: <strong><?= $row['full_name'] ?></strong><br>
+            Số điện thoại: <?= $row['phone'] ?><br>
+            Địa chỉ: <span class="text-muted"><?= $row['address'] ?></span>
+          </td>
+          <td><?= number_format($row['total_amount'], 0, ',', '.') ?> đ</td>
+          <td><?= $row['payment_method'] === 'cod' ? 'Thanh toán khi nhận' : 'Chuyển khoản' ?></td>
+          <td><?= ucfirst($row['order_status']) ?></td>
+          <td>
+            <!-- Nút xem chi tiết -->
+            <!-- Nút xem chi tiết -->
+            <button class="btn btn-sm btn-info mb-1 view-details" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#orderDetailModal">
+              Xem chi tiết
+            </button>
+
+
+
+            <?php if ($row['order_status'] === 'chưa thanh toán'): ?>
+              <form method="POST" action="/cuahangtaphoa/momo_payment.php" class="d-inline">
+                <input type="hidden" name="order_id" value="<?= $row['id'] ?>">
+                <button type="submit" class="btn btn-sm btn-warning mb-1">Thanh toán ngay</button>
+              </form>
+              <button type="button"
+                class="btn btn-sm btn-secondary mb-1 btn-edit-address"
+                data-order-id="<?= $row['id'] ?>">
+                Thay đổi địa chỉ
               </button>
-
-
-
-              <?php if ($row['order_status'] === 'chưa thanh toán'): ?>
-                <form method="POST" action="/cuahangtaphoa/momo_payment.php" class="d-inline">
-                  <input type="hidden" name="order_id" value="<?= $row['id'] ?>">
-                  <button type="submit" class="btn btn-sm btn-warning mb-1">Thanh toán ngay</button>
-                </form>
+            <?php elseif (in_array($row['order_status'], ['chuẩn bị lấy hàng', 'đang giao'])): ?>
+              <?php if ($row['payment_method'] === 'bank_transfer'): ?>
+                <button type="button"
+                  class="btn btn-sm btn-danger mb-1 btn-cancel-order"
+                  data-order-id="<?= $row['id'] ?>">
+                  Yêu cầu huỷ
+                </button>
+              <?php endif; ?>
+              <?php if ($row['order_status'] === 'chuẩn bị lấy hàng'): ?>
                 <button type="button"
                   class="btn btn-sm btn-secondary mb-1 btn-edit-address"
                   data-order-id="<?= $row['id'] ?>">
                   Thay đổi địa chỉ
                 </button>
-              <?php elseif (in_array($row['order_status'], ['chuẩn bị lấy hàng', 'đang giao'])): ?>
-                <?php if ($row['payment_method'] === 'bank_transfer'): ?>
-                  <button type="button"
-                    class="btn btn-sm btn-danger mb-1 btn-cancel-order"
-                    data-order-id="<?= $row['id'] ?>">
-                    Yêu cầu huỷ
-                  </button>
-                <?php endif; ?>
-                <?php if ($row['order_status'] === 'chuẩn bị lấy hàng'): ?>
-                  <button type="button"
-                    class="btn btn-sm btn-secondary mb-1 btn-edit-address"
-                    data-order-id="<?= $row['id'] ?>">
-                    Thay đổi địa chỉ
-                  </button>
-                <?php endif; ?>
-              <?php elseif ($row['order_status'] === 'yêu cầu huỷ'): ?>
-                <span class="text-muted">Đã yêu cầu huỷ</span>
               <?php endif; ?>
-            </td>
-          </tr>
+            <?php elseif ($row['order_status'] === 'yêu cầu huỷ'): ?>
+              <span class="text-muted">Đã yêu cầu huỷ</span>
+            <?php endif; ?>
+          </td>
+        </tr>
 
 
-        <?php endwhile; ?>
-      <?php endif; ?>
-    </tbody>
-  </table>
-  <?php include __DIR__ . '/../components/order_detail_modal.php'; ?>
+      <?php endwhile; ?>
+    <?php endif; ?>
+  </tbody>
+</table>
+<?php include __DIR__ . '/../components/order_detail_modal.php'; ?>
 </div>
 
 

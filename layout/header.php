@@ -13,7 +13,7 @@ $role = $user['role'] ?? null;
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Shopee Clone</title>
+  <title>TapHoaOnline</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/cuahangtaphoa/assets/style.css">
 </head>
@@ -24,7 +24,7 @@ $role = $user['role'] ?? null;
 
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-      <a class="navbar-brand" href="/cuahangtaphoa/index.php">🛍️ Shopee Clone</a>
+      <a class="navbar-brand" href="/cuahangtaphoa/index.php">🛍️ TapHoaOnline</a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav ms-auto">
           <?php if ($user): ?>
