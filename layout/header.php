@@ -51,21 +51,29 @@ $role = $user['role'] ?? null;
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
         <span class="navbar-toggler-icon"></span>
       </button>
+
       <div class="collapse navbar-collapse" id="mainNavbar">
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav ms-auto align-items-center">
           <?php if ($user): ?>
-            <?php if ($role === 'admin'): ?>
-              <li class="nav-item">
-                <a class="nav-link" href="/cuahangtaphoa/admin/orders.php"><i class="bi bi-box-seam"></i> Đơn hàng</a>
-              </li>
-            <?php else: ?>
+            <?php if ($role === 'user'): ?>
               <?php include_once __DIR__ . '/components/cart_header.php'; ?>
-              <li class="nav-item">
-                <a class="nav-link" href="/cuahangtaphoa/orders/my_orders.php"><i class="bi bi-receipt"></i> Đơn hàng</a>
-              </li>
             <?php endif; ?>
-            <li class="nav-item">
-              <a class="nav-link" href="/cuahangtaphoa/auth/logout.php"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="/cuahangtaphoa/assets/avt.jpg" alt="Avatar" width="32" height="32" class="rounded-circle me-2">
+                <?= htmlspecialchars($user['username']) ?>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/cuahangtaphoa/account/profile.php"><i class="bi bi-person-circle me-2"></i> Tài khoản của tôi</a></li>
+                <?php if ($role === 'user'): ?>
+                  <li><a class="dropdown-item" href="/cuahangtaphoa/orders/my_orders.php"><i class="bi bi-receipt me-2"></i> Đơn mua</a></li>
+                <?php endif; ?>
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" href="/cuahangtaphoa/auth/logout.php"><i class="bi bi-box-arrow-right me-2"></i> Đăng xuất</a></li>
+              </ul>
             </li>
           <?php else: ?>
             <li class="nav-item">
@@ -79,5 +87,6 @@ $role = $user['role'] ?? null;
       </div>
     </div>
   </nav>
+
 
   <div class="container py-4 main">
