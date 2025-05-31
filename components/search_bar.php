@@ -1,5 +1,5 @@
-<form class="mx-auto ms-5 position-relative" style="width: 600px;" autocomplete="off">
-  <input id="searchInput" class="form-control" type="search" placeholder="Tìm sản phẩm..." aria-label="Search">
+<form class="mx-auto ms-5 position-relative" action="/cuahangtaphoa/index.php" method="get" style="width: 600px;" autocomplete="off">
+  <input id="searchInput" name="q" class="form-control" type="search" placeholder="Tìm sản phẩm..." aria-label="Search">
   <button class="btn btn-outline-success position-absolute top-0 end-0 h-100 px-3" type="submit">
     <i class="bi bi-search"></i>
   </button>
@@ -27,7 +27,7 @@
         if (data.length > 0) {
           resultsBox.classList.remove('d-none');
           resultsBox.innerHTML = data.map(p => `
-          <a href="/cuahangtaphoa/product/detail.php?id=${p.id}" class="d-flex align-items-center text-decoration-none text-dark p-2 border-bottom hover-bg">
+          <a href="/cuahangtaphoa/index.php?q=${p.name}" class="d-flex align-items-center text-decoration-none text-dark p-2 border-bottom hover-bg">
             <img src="${p.image}" alt="" width="48" height="48" class="me-2 rounded" style="object-fit: cover;">
             <div>
               <div class="fw-semibold">${p.name}</div>
