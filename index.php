@@ -112,7 +112,7 @@ if (!empty($keyword)) {
                     data-product-id="<?= $row['id'] ?>"
                     data-product-name="<?= htmlspecialchars($row['name']) ?>"
                     data-price="<?= $final_price ?>">
-                    💰 Mua ngay
+                    <i class="bi bi-cash-coin me-1"></i> Mua ngay
                   </button>
 
                   <?php include __DIR__ . '/components/quick_checkout_modal.php'; ?>

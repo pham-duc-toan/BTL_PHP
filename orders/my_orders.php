@@ -132,89 +132,89 @@ $result = $stmt->get_result();
     <div class="ms-2">
       <button class="btn btn-primary mt-4" type="submit">Áp dụng</button>
     </div>
-</div>
-
-<!-- Hidden giữ filter cũ -->
-<input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
-</form>
 
 
-<table class="table table-bordered table-striped align-middle">
-  <thead class="table-light">
-    <tr>
-      <th>Mã đơn</th>
-      <th>Ngày đặt</th>
-      <th>Thông tin đặt hàng</th>
-      <th>Tổng tiền</th>
-      <th>Phương thức</th>
-      <th>Trạng thái</th>
-      <th width="200">Hành động</th>
-    </tr>
-  </thead>
-  <tbody>
-    <?php if ($result->num_rows === 0): ?>
+    <!-- Hidden giữ filter cũ -->
+    <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+  </form>
+
+
+  <table class="table table-bordered table-striped align-middle">
+    <thead class="table-light">
       <tr>
-        <td colspan="7" class="text-center text-muted">Không có đơn hàng nào.</td>
+        <th>Mã đơn</th>
+        <th>Ngày đặt</th>
+        <th>Thông tin đặt hàng</th>
+        <th>Tổng tiền</th>
+        <th>Phương thức</th>
+        <th>Trạng thái</th>
+        <th width="200">Hành động</th>
       </tr>
-    <?php else: ?>
-      <?php while ($row = $result->fetch_assoc()): ?>
+    </thead>
+    <tbody>
+      <?php if ($result->num_rows === 0): ?>
         <tr>
-          <td><?= $row['id'] ?></td>
-          <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
-          <td>
-            Họ tên: <strong><?= $row['full_name'] ?></strong><br>
-            Số điện thoại: <?= $row['phone'] ?><br>
-            Địa chỉ: <span class="text-muted"><?= $row['address'] ?></span>
-          </td>
-          <td><?= number_format($row['total_amount'], 0, ',', '.') ?> đ</td>
-          <td><?= $row['payment_method'] === 'cod' ? 'Thanh toán khi nhận' : 'Chuyển khoản' ?></td>
-          <td><?= ucfirst($row['order_status']) ?></td>
-          <td>
-            <!-- Nút xem chi tiết -->
-            <!-- Nút xem chi tiết -->
-            <button class="btn btn-sm btn-info mb-1 view-details" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#orderDetailModal">
-              Xem chi tiết
-            </button>
-
-
-
-            <?php if ($row['order_status'] === 'chưa thanh toán'): ?>
-              <form method="POST" action="/cuahangtaphoa/momo_payment.php" class="d-inline">
-                <input type="hidden" name="order_id" value="<?= $row['id'] ?>">
-                <button type="submit" class="btn btn-sm btn-warning mb-1">Thanh toán ngay</button>
-              </form>
-              <button type="button"
-                class="btn btn-sm btn-secondary mb-1 btn-edit-address"
-                data-order-id="<?= $row['id'] ?>">
-                Thay đổi địa chỉ
+          <td colspan="7" class="text-center text-muted">Không có đơn hàng nào.</td>
+        </tr>
+      <?php else: ?>
+        <?php while ($row = $result->fetch_assoc()): ?>
+          <tr>
+            <td><?= $row['id'] ?></td>
+            <td><?= date('d/m/Y H:i', strtotime($row['order_date'])) ?></td>
+            <td>
+              Họ tên: <strong><?= $row['full_name'] ?></strong><br>
+              Số điện thoại: <?= $row['phone'] ?><br>
+              Địa chỉ: <span class="text-muted"><?= $row['address'] ?></span>
+            </td>
+            <td><?= number_format($row['total_amount'], 0, ',', '.') ?> đ</td>
+            <td><?= $row['payment_method'] === 'cod' ? 'Thanh toán khi nhận' : 'Chuyển khoản' ?></td>
+            <td><?= ucfirst($row['order_status']) ?></td>
+            <td>
+              <!-- Nút xem chi tiết -->
+              <!-- Nút xem chi tiết -->
+              <button class="btn btn-sm btn-info mb-1 view-details" data-id="<?= $row['id'] ?>" data-bs-toggle="modal" data-bs-target="#orderDetailModal">
+                Xem chi tiết
               </button>
-            <?php elseif (in_array($row['order_status'], ['chuẩn bị lấy hàng', 'đang giao'])): ?>
-              <?php if ($row['payment_method'] === 'bank_transfer'): ?>
-                <button type="button"
-                  class="btn btn-sm btn-danger mb-1 btn-cancel-order"
-                  data-order-id="<?= $row['id'] ?>">
-                  Yêu cầu huỷ
-                </button>
-              <?php endif; ?>
-              <?php if ($row['order_status'] === 'chuẩn bị lấy hàng'): ?>
+
+
+
+              <?php if ($row['order_status'] === 'chưa thanh toán'): ?>
+                <form method="POST" action="/cuahangtaphoa/momo_payment.php" class="d-inline">
+                  <input type="hidden" name="order_id" value="<?= $row['id'] ?>">
+                  <button type="submit" class="btn btn-sm btn-warning mb-1">Thanh toán ngay</button>
+                </form>
                 <button type="button"
                   class="btn btn-sm btn-secondary mb-1 btn-edit-address"
                   data-order-id="<?= $row['id'] ?>">
                   Thay đổi địa chỉ
                 </button>
+              <?php elseif (in_array($row['order_status'], ['chuẩn bị lấy hàng', 'đang giao'])): ?>
+                <?php if ($row['payment_method'] === 'bank_transfer'): ?>
+                  <button type="button"
+                    class="btn btn-sm btn-danger mb-1 btn-cancel-order"
+                    data-order-id="<?= $row['id'] ?>">
+                    Yêu cầu huỷ
+                  </button>
+                <?php endif; ?>
+                <?php if ($row['order_status'] === 'chuẩn bị lấy hàng'): ?>
+                  <button type="button"
+                    class="btn btn-sm btn-secondary mb-1 btn-edit-address"
+                    data-order-id="<?= $row['id'] ?>">
+                    Thay đổi địa chỉ
+                  </button>
+                <?php endif; ?>
+              <?php elseif ($row['order_status'] === 'yêu cầu huỷ'): ?>
+                <span class="text-muted">Đã yêu cầu huỷ</span>
               <?php endif; ?>
-            <?php elseif ($row['order_status'] === 'yêu cầu huỷ'): ?>
-              <span class="text-muted">Đã yêu cầu huỷ</span>
-            <?php endif; ?>
-          </td>
-        </tr>
+            </td>
+          </tr>
 
 
-      <?php endwhile; ?>
-    <?php endif; ?>
-  </tbody>
-</table>
-<?php include __DIR__ . '/../components/order_detail_modal.php'; ?>
+        <?php endwhile; ?>
+      <?php endif; ?>
+    </tbody>
+  </table>
+  <?php include __DIR__ . '/../components/order_detail_modal.php'; ?>
 </div>
 
 
@@ -269,6 +269,7 @@ $result = $stmt->get_result();
     </form>
   </div>
 </div>
+
 <?php include_once __DIR__ . '/../components/add_address_modal.php'; ?>
 <?php include_once __DIR__ . '/../components/confirm_modal.php'; ?>
 <?php include_once __DIR__ . '/../layout/footer.php'; ?>

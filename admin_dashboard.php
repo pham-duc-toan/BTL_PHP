@@ -41,7 +41,7 @@ $statusCounts = array_values($statusStats);
 ?>
 
 <div class="container py-4">
-  <h2 class="mb-4">📊 Thống kê đơn hàng</h2>
+  <h2 class="mb-4"> Thống kê đơn hàng</h2>
 
   <div class="row mb-4">
     <div class="col-md-6">
@@ -67,7 +67,7 @@ $statusCounts = array_values($statusStats);
     <!-- Biểu đồ tròn: loại đơn -->
     <div class="col-md-6">
       <div class="card">
-        <div class="card-header">🧁 Tỷ lệ đơn hàng theo trạng thái</div>
+        <div class="card-header">Tỷ lệ đơn hàng theo trạng thái</div>
         <div class="card-body">
           <canvas id="orderStatusPie" style="min-height: 300px;"></canvas>
         </div>
