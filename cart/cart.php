@@ -87,19 +87,40 @@ $result = $stmt->get_result();
     return number.toLocaleString('vi-VN') + 'đ';
   }
 
+  function reloadCartHeader() {
+    fetch('/cuahangtaphoa/layout/components/cart_header.php')
+      .then(res => res.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newCart = doc.getElementById('header_cart');
+        const current = document.getElementById('header_cart');
+        if (newCart && current) {
+          current.replaceWith(newCart);
+        }
+      });
+  }
+
   function updateTotal() {
     let total = 0;
-    document.querySelectorAll(".item-check:checked").forEach(cb => {
-      const row = cb.closest("tr");
+    document.querySelectorAll("tr[data-price]").forEach(row => {
       const price = parseFloat(row.dataset.price);
       const quantity = parseInt(row.querySelector(".quantity-input").value);
       const subtotal = price * quantity;
 
+      // Luôn cập nhật thành tiền
       row.querySelector(".item-subtotal").textContent = formatCurrency(subtotal);
-      total += subtotal;
+
+      // Chỉ cộng vào tổng nếu checkbox được tick
+      const checkbox = row.querySelector(".item-check");
+      if (checkbox && checkbox.checked) {
+        total += subtotal;
+      }
     });
+
     document.getElementById("totalAmount").textContent = formatCurrency(total);
   }
+
 
   document.querySelectorAll(".item-check").forEach(cb =>
     cb.addEventListener("change", updateTotal)
@@ -116,9 +137,12 @@ $result = $stmt->get_result();
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: `id=${id}&quantity=${quantity}`
-      });
+      }).then(() => {
+        updateTotal();
+        reloadCartHeader();
+      })
 
-      updateTotal();
+
     });
   });
 
@@ -129,7 +153,12 @@ $result = $stmt->get_result();
 
       fetch('remove_from_cart.php?id=' + id)
         .then(() => row.remove())
-        .then(updateTotal);
+        .then(
+          () => {
+            updateTotal();
+            reloadCartHeader();
+          }
+        );
     });
 
   });

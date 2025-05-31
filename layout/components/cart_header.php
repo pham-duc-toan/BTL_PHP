@@ -21,7 +21,7 @@ if ($user && $role !== 'admin') {
 }
 ?>
 
-<li class="nav-item">
+<li id="header_cart" class="nav-item">
   <a class="nav-link" href="/cuahangtaphoa/cart/cart.php">
     🛒 Giỏ hàng
     <?php if ($cartCount > 0): ?>
