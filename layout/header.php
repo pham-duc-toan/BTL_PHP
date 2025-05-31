@@ -24,7 +24,11 @@ $role = $user['role'] ?? null;
 
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-      <a class="navbar-brand" href="/cuahangtaphoa/index.php">🛍️ GoShopOnline</a>
+      <a class="navbar-brand"
+        href="/cuahangtaphoa/<?= (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin') ? 'admin_dashboard.php' : 'index.php' ?>">
+        🛍️ GoShopOnline
+      </a>
+
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav ms-auto">
           <?php if ($user): ?>

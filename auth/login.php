@@ -11,34 +11,45 @@ if (isset($_SESSION['user'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = $_POST['email'];
-    $pass = $_POST['password'];
+  $email = $_POST['email'];
+  $pass = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?") or die("Lỗi truy vấn: " . $conn->error);
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $res = $stmt->get_result();
+  $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?") or die("Lỗi truy vấn: " . $conn->error);
+  $stmt->bind_param("s", $email);
+  $stmt->execute();
+  $res = $stmt->get_result();
 
-    if ($res->num_rows === 1) {
-        $user = $res->fetch_assoc();
+  if ($res->num_rows === 1) {
+    $user = $res->fetch_assoc();
 
-        if (password_verify($pass, $user['password'])) {
-            // ✅ Gán thông tin user vào session
-            $_SESSION['user'] = [
-                'id' => $user['id'],
-                'email' => $user['email'],
-                'username' => $user['name'],  // hoặc fullname nếu có
-                'role' => $user['role']
-            ];
+    if (password_verify($pass, $user['password'])) {
+      // ✅ Gán thông tin user vào session
+      $_SESSION['user'] = [
+        'id' => $user['id'],
+        'email' => $user['email'],
+        'username' => $user['name'],  // hoặc fullname nếu có
+        'role' => $user['role']
+      ];
 
-            header("Location: /cuahangtaphoa/index.php");
-            exit();
-        } else {
-            $error = "Sai mật khẩu!";
-        }
+      $_SESSION['user'] = [
+        'id' => $user['id'],
+        'email' => $user['email'],
+        'username' => $user['name'],  // hoặc fullname nếu có
+        'role' => $user['role']
+      ];
+
+      if ($user['role'] === 'admin') {
+        header("Location: /cuahangtaphoa/admin_dashboard.php");
+      } else {
+        header("Location: /cuahangtaphoa/index.php");
+      }
+      exit();
     } else {
-        $error = "Email không tồn tại!";
+      $error = "Sai mật khẩu!";
     }
+  } else {
+    $error = "Email không tồn tại!";
+  }
 }
 ?>
 
