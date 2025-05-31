@@ -54,7 +54,7 @@ $result = $conn->query($sql);
 
   <!-- Tabs trạng thái -->
 
-  <ul class="nav nav-tabs mb-3">
+  <ul class="nav nav-tabs mt-5 mb-3">
     <?php
     $tabs = ['all' => 'Tất cả', 'chưa thanh toán' => 'Chưa thanh toán', 'chuẩn bị lấy hàng' => 'Chuẩn bị lấy hàng', 'đang giao' => 'Đang giao', 'đã giao' => 'Đã giao', 'đã huỷ' => 'Đã huỷ', 'chưa hoàn tiền' => 'Chưa hoàn tiền', 'đã hoàn tiền' => 'Đã hoàn tiền'];
     foreach ($tabs as $key => $label): ?>
