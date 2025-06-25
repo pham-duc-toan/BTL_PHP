@@ -214,7 +214,7 @@ $result = $conn->query($sql);
 
         </div>
         <div class="modal-body" id="order-detail-content">
-          <p class="text-muted">Đang tải...</p>
+
         </div>
       </div>
     </div>
@@ -315,7 +315,7 @@ $result = $conn->query($sql);
       button.addEventListener('click', function() {
         const orderId = this.dataset.id;
         const detailContent = document.getElementById('order-detail-content');
-        detailContent.innerHTML = '<p class="text-muted">Đang tải...</p>';
+
 
         fetch(`/cuahangtaphoa/api/order_items_api.php?order_id=${encodeURIComponent(orderId)}`)
           .then(res => res.json())

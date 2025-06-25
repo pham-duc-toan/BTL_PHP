@@ -286,7 +286,7 @@ if (!empty($keyword)) {
   // Tải địa chỉ cho modal Mua ngay
   function loadQuickAddresses(selected = null) {
     const addressList = document.getElementById("quickAddressList");
-    addressList.innerHTML = `<div class="text-muted">Đang tải...</div>`;
+
 
     fetch('/cuahangtaphoa/api/address_api.php')
       .then(res => res.json())

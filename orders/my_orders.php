@@ -70,6 +70,9 @@ $sql .= " ORDER BY $sort_by $sort_dir";
 
 // Chuẩn bị và bind
 $stmt = $conn->prepare($sql);
+if (!$stmt) {
+  die("Lỗi prepare: " . $conn->error); // Bắt lỗi thật
+}
 $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -284,7 +287,7 @@ $result = $stmt->get_result();
     btn.addEventListener('click', function() {
       const orderId = this.dataset.id;
       const contentEl = document.getElementById('order-detail-content');
-      contentEl.innerHTML = '<p class="text-muted">Đang tải...</p>';
+
 
       fetch(`/cuahangtaphoa/api/order_items_api.php?order_id=${encodeURIComponent(orderId)}`)
         .then(res => res.json())
@@ -377,7 +380,7 @@ $result = $stmt->get_result();
 
   function loadAddressRadioList(selected = null) {
     const wrapper = document.getElementById("addressRadioList");
-    wrapper.innerHTML = `<div class="text-muted">Đang tải...</div>`;
+
 
     fetch('/cuahangtaphoa/api/address_api.php')
       .then(res => res.json())

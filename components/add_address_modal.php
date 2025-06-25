@@ -48,12 +48,12 @@
     mapInitialized = true;
 
     const defaultLatLng = [21.0285, 105.8542]; // Hà Nội
-
+    //thư viện
     const map = L.map('map').setView(defaultLatLng, 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
-
+    //thư viện
     const marker = L.marker(defaultLatLng, {
       draggable: true
     }).addTo(map);
@@ -71,8 +71,8 @@
           document.getElementById('address').value = 'Lỗi khi truy vấn địa chỉ';
         });
     }
-
-    // Khi kéo thả marker
+    //thư viện
+    // Khi kéo thả marker 
     marker.on('dragend', function() {
       const {
         lat,
@@ -80,7 +80,7 @@
       } = marker.getLatLng();
       updateAddress(lat, lng);
     });
-
+    //thư viện
     // Khi click vào bản đồ
     map.on('click', function(e) {
       const {
@@ -96,7 +96,7 @@
   };
 
 
-  // Khi modal mở thì khởi tạo bản đồ (tránh lỗi chiều cao 0)
+  // Khi modal mở thì khởi tạo bản đồ 
   const addAddressModal = document.getElementById('addAddressModal');
   addAddressModal.addEventListener('shown.bs.modal', () => {
     initLeafletMap();
